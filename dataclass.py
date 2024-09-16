@@ -59,13 +59,13 @@ class RhythmoOutput:
     """
     Output data from Rhythmo
     """
-    resampled_data: Optional[pd.DataFrame] = None
-    wavelet_data: Optional[pd.DataFrame] = None
-    cycle_period: Optional[float] = None
-    filtered_cycle: Optional[pd.DataFrame] = None
+    resampled_data: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
+    wavelet_data: Optional[pd.DataFrame] = None # dataframe with columns: period, power, significance, peak (1 or 0)
+    cycle_period: Optional[float] = None # float value (in days)
+    filtered_cycle: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
 
-    projected_cycle: Optional[pd.DataFrame] = None
-    future_phases: Optional[pd.DataFrame] = None
+    projected_cycle: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
+    future_phases: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and phase
 
     # str, comments about the cycle
     notes: str = ''
