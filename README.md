@@ -6,3 +6,33 @@ To install all dependencies, run:
 ```bash
 pip install -r requirements.txt
 ```
+
+Rythmo can be run using:
+
+```bash
+python -m run run --inputs {path/to/data.csv} --outputs predict_future_phases
+```
+
+
+### Running with non-default parameters
+
+See parameters.py for list of parameters used in Rythmo.
+
+Non-default parameters can be set by creating a json file (example given in change_parameters.json), containing only changes required comapred to the default.
+
+For example, if the user wants the next 4 peak/trough times (i.e., 2 peaks, 2 troughs), the json would be:
+
+```json
+{
+    "timing_of_future_phases": "peak_trough",
+    "number_of_future_phases": 4
+}
+```
+
+All other parameters will use default values.
+
+Once the json file is created, use the -p flag to point to the json file location:
+
+```bash
+python -m run run --inputs {path/to/data.csv} --outputs predict_future_phases --parameters change_parameters.json
+```

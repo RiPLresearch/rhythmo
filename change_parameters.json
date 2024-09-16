@@ -1,0 +1,12 @@
+{
+    "data_type": "csv",
+    "data_resampling_rate": "1H",
+    "wavelet_waveform": "morlet",
+    "cycle_selection_method": "prominence",
+    "cycle_period": null,
+    "bandpass_cutoff_percentage": 33,
+    "projection_method": "linear",
+    "projection_duration": null,
+    "timing_of_future_phases": "regular_sampling",
+    "number_of_future_phases": 8
+}
