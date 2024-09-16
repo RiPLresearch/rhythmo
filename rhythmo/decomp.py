@@ -2,6 +2,7 @@
 # Mortlet Wavelet Analysis
 
 # Variables
+# have an if function depending on what the user has inputted for the wave form here:
 WAVELET = cwt.Morlet(6) # Continuous wavelet transformation, 6 (non-dimensional frequency parameter) controls the frequency of the wavelet
         # used to analyze signals, detect changes in frequency over time.
 STRONGEST_PEAK = 'prominence' # measure of how much a peak stands out relative to its surrounding data. Used to filter or rank detected peaks based on their prominence.
@@ -78,5 +79,7 @@ def freqs(df):
     return freqs
 
 #def decomp(rhythmo_inputs, rhythmo_outputs, parameters): 
+# rhythmo_outputs.wavelet_data = ## some dataframe
+# return rhythmo_outputs
 
 
