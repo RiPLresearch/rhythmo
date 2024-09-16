@@ -1,0 +1,1 @@
+#def forecast(rhythmo_inputs, rhythmo_outputs, parameters):
