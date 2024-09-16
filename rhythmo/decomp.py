@@ -67,4 +67,16 @@ Outputs:
 
 """
 
+def freqs(df):
+    data_duration = (hr_interpolate['timestamp'].iloc[-1] - hr_interpolate['timestamp'].iloc[0]).total_seconds()/(60 * 60 * 24)/3 
+    """Calculates the total duration in days between the first and last timestamps in hr_interpolate and divides by 3"""
+
+    periods = np.arange(2, int(data_duration), 0.5) 
+    """Generates values from 2 to up until 'int(n)' calculated above, with a step size of 0.5"""
+
+    freqs = (1/periods)
+    return freqs
+
 #def decomp(rhythmo_inputs, rhythmo_outputs, parameters): 
+
+

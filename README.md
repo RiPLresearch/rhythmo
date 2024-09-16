@@ -13,6 +13,10 @@ Rythmo can be run using:
 python -m run run --inputs {path/to/data.csv} --outputs predict_future_phases
 ```
 
+### Inputs
+Standard inputs are csv files with two columns: timestamp and value
+Timestamp refers to the number of milliseconds since epoch (UNIX time)
+Value refers to the physiological value (e.g., Heart rate beats per minute)
 
 ### Running with non-default parameters
 

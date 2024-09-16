@@ -60,6 +60,7 @@ class RhythmoOutput:
     Output data from Rhythmo
     """
     resampled_data: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
+    best_segment: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
     wavelet_data: Optional[pd.DataFrame] = None # dataframe with columns: period, power, significance, peak (1 or 0)
     cycle_period: Optional[float] = None # float value (in days)
     filtered_cycle: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
