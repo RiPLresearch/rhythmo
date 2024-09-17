@@ -22,6 +22,11 @@ if STRONGEST_PEAK == 'prominence':
 elif STRONGEST_PEAK == 'relative_power':
     strongest_peak = xpeaks[np.argmax(power_relative)]
 
+xpeaks = [strongest_peak]
+print(f"Strongest peak: {strongest_peak}")
+
+
+
 loc_peak = np.where(period == strongest_peak)[0][0]
 power_peak = power[loc_peak]
 cycle_repeats = 3
@@ -36,13 +41,7 @@ for start_segment in range(len(power_peak) - time_duration):
           avg_power = avg_power_segment
           best_segment = start_segment
         
-
-xpeaks = [strongest_peak]
-print(f"Strongest peak: {strongest_peak}")
-
-
 # Trimming data to display an sample of the subject's strongest HR cycle
-sample_start = hr_resample['timestamp'].iloc[best_segment] 
 sample_end = hr_resample['timestamp'].iloc[best_segment + time_duration]
 trimmed_data = hr_resample[hr_resample['timestamp'] <= sample_end] 
 
@@ -76,12 +75,6 @@ if filtered_min != filtered_max:  # Just preventing division by 0
     smoothed_hr = smoothed_hr * (original_max - original_min) + original_min # Reversing with the orignal max and min instead of filtered max and min
 
 # Butter bandpass filter
-sample_data = trimmed_data.copy()
-sample_data['value'] = smoothed_hr
-sample_data['value'][nan_inds] = np.NaN # Putting the NaNs back in for accuracy
-
-
-# Butter bandpass filter
 smoothed_all = butter_bandpass_filter(hr_interpolate['value'],
                                         1 / ((1 + filter_tolerance) * strongest_peak),
                                         1 / ((1 - filter_tolerance) * strongest_peak),
@@ -97,10 +90,14 @@ if filtered_min != filtered_max:  # Just preventing division by 0
     smoothed_all = (smoothed_all - filtered_min) / (filtered_max - filtered_min) # Making sure it really is normalised before reversing
     smoothed_all = smoothed_all * (original_max - original_min) + original_min # Reversing with the orignal max and min instead of filtered max and min
 
+def 
 # Butter bandpass filter
 smoothed_all_hr = hr_interpolate.copy()
 smoothed_all_hr['value'] = smoothed_all
-# smoothed_all_hr['value'][nan_inds] = np.NaN # Putting the NaNs back in for accuracy
 
 
-#def selection(rhythmo_inputs, rhythmo_outputs, parameters):
+def selection(rhythmo_inputs, rhythmo_outputs, parameters):
+
+    
+    rhythmo_outputs =  ## some dataframe
+    return rhythmo_outputs
