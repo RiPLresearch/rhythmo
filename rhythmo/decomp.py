@@ -15,7 +15,7 @@ def create_wavelet(wavelet_waveform):
     return WAVELET
 
 def  compute_alpha(resampled_data):
-    """ Calculates alpha, the autoregressive coefficient. """
+    """ Calculates alpha, the autoregressive coefficient."""
 
     # Convert panda series ('value' column in the data) into NumPy arrays
     resampled_data_array = resampled_data.value.to_numpy()
@@ -23,7 +23,7 @@ def  compute_alpha(resampled_data):
     return alpha, resampled_data_array
 
 def get_cwt_frequencies(resampled_data):
-    """Calculates the frequencies over which the CWT is computed"""
+    """Calculates the frequencies over which the CWT is computed."""
 
     # Calculates the total duration in days between the first and last timestamps in the resampled data and divides by 3
     data_duration = (resampled_data['timestamp'].iloc[-1] - resampled_data['timestamp'].iloc[0]).total_seconds()/(60 * 60 * 24)/3 
@@ -65,8 +65,6 @@ def cont_wavelet_transform(resampled_data_array, sampling_interval, WAVELET, fre
     """
     transformed_wavelet, scales, frequencies_scales, coi, fft, fftfreqs = cwt.cwt(signal = resampled_data_array, dt = sampling_interval, wavelet = WAVELET, freqs = frequencies_cwt) 
     return transformed_wavelet, scales, coi, fft, fftfreqs
-
-# fft_power = np.abs(fft) ** 2 # Fourier power spectrum. Squared magnitude of Fourier transform. Outputs overall power for each freq, independent of time
 
 def get_global_significance(var, sampling_interval, scales, alpha, DOF, WAVELET):
     """ Global significance of wavelet power spectrum.
@@ -152,5 +150,3 @@ def decomp(rhythmo_inputs, rhythmo_outputs, parameters):
     rhythmo_outputs.wavelet_data =  ## some dataframe
 
     return rhythmo_outputs
-
-

@@ -6,6 +6,9 @@ period = 1 / freqs # converting freqs to periods
 var = resampled_data_array.std()**2 # variance of signal y. This is used in significance testing. Variance = square of std.
 
 
+fft_power = np.abs(fft) ** 2 # Fourier power spectrum. Squared magnitude of Fourier transform. Outputs overall power for each freq, independent of time
+
+
 xpeaks = []; power_relative = []
 ind_peaks = scipy.signal.find_peaks(var * glbl_power)[0]
 peak_prominence = scipy.signal.peak_prominences(var * glbl_power, ind_peaks)[0]

@@ -1,7 +1,6 @@
 import pycwt as cwt # continuous wavelet spectral analysis
 from scipy.signal import butter, sosfiltfilt, hilbert # tools for signal processing (filtering, fourier transforms, wavelets)
 
-# Bandpass filtering
 def butter_bandpass_filter_params(lowcut: float,
                                   highcut: float,
                                   fs: float,
@@ -25,7 +24,7 @@ def butter_bandpass_filter_params(lowcut: float,
     butter(order, [low, high], btype='bandpass', output='sos'): array of float
         butter bandpass filter parameters (order, frequency range, type of filter)
     """
-    nyq = 0.5 * fs # Nyquist freq is equal to half the sampling rate of a discrete signal processing system. Sampling rate (# samples per second)
+    nyq = 0.5 * fs # Nyquist frequency:
     low = lowcut / nyq # lower cut off frequency 
     high = highcut / nyq # higher cut off frequency 
     return butter(order, [low, high], btype='bandpass', output='sos') 
@@ -63,4 +62,9 @@ def butter_bandpass_filter(data: list,
             
     return filtered_signal
 
-#def track(rhythmo_inputs, rhythmo_outputs, parameters):
+def track(rhythmo_inputs, rhythmo_outputs, parameters):
+
+    = butter_bandpass_filter_params(rhythmo_inputs.)
+
+    rhythmo_outputs.filtered_cycle = butter_bandpass_filter()
+    return rhythmo_outputs
