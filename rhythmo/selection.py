@@ -1,4 +1,11 @@
 # Peak analysis
+STRONGEST_PEAK = 'prominence' # measure of how much a peak stands out relative to its surrounding data. Used to filter or rank detected peaks based on their prominence.
+power = np.abs(wave) ** 2 # wavelet power spectrum. Squared magnitude of abs value of wavelet transform. Displays how power of different freqs changes over time
+glbl_power = power.mean(axis=1) # global wavelet power. Averages wavelet power over time, represents the avg power at each freq/scale.
+period = 1 / freqs # converting freqs to periods
+var = resampled_data_array.std()**2 # variance of signal y. This is used in significance testing. Variance = square of std.
+
+
 xpeaks = []; power_relative = []
 ind_peaks = scipy.signal.find_peaks(var * glbl_power)[0]
 peak_prominence = scipy.signal.peak_prominences(var * glbl_power, ind_peaks)[0]
