@@ -1,14 +1,15 @@
 import pycwt as cwt
-from scipy.signal import butter, sosfiltfilt, hilbert
 
 def create_wavelet(wavelet_waveform):
     """Based on the chosen waveform, creates the relevant wavelet."""
     if wavelet_waveform = "Mortlet":
         WAVELET = cwt.Mortlet(6)
         elif wavelet_waveform = "Gaussian":
-            WAVELET = cwt.MexicanHat()
+            WAVELET = cwt.DOG(m=2)
         elif wavelet_waveform = "Mexican Hat":
             WAVELET = cwt.MexicanHat()
+        elif wavelet_waveform = "":
+            WAVELET = cwt.
         else:
             WAVELET = cwt.Mortlet(6)
 
