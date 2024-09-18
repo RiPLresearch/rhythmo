@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+# Stored data extensions
+*.csv
+*.json
+!change_parameters.json
+
 # Distribution / packaging
 .Python
 build/
