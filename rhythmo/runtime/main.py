@@ -2,24 +2,24 @@ import os
 import time
 from typing import List, Optional
 from importlib import import_module
-
 import pandas as pd
-from logger.logger import get_logger
-from dataclass import Parameters, RhythmoOutput
-from utils import check_input, read_input, read_json
 
-from rhythmo.process import process
-from rhythmo.decomp import decomp
-# from rhythmo.selection import selection
-# from rhythmo.track import track
-# from rhythmo.project import project
-# from rhythmo.forecast import forecast
+from logger.logger import get_logger
+
+from rhythmo.data import Parameters, RhythmoOutput, RhythmoInput
+from rhythmo.utils import check_input, read_input, read_json
+from rhythmo.input_handlers.process import process
+from rhythmo.input_handlers.decomp import decomp
+# from rhythmo.input_handlers.selection import selection
+# from rhythmo.input_handlers.track import track
+# from rhythmo.input_handlers.project import project
+# from rhythmo.input_handlers.forecast import forecast
 
 logger = get_logger(__name__)
 
 STEPS = {"get_frequencies": 1, "track_cycle": 2, "project_cycle": 3, "predict_future_phases": 4}
 
-class Run:
+class Runtime:
 
     def __init__(self, inputs: List[str], outputs: List[str], parameters: Optional[str]) -> None:
         """
@@ -31,12 +31,12 @@ class Run:
         args: args parsed by Namespace
         """
         logger.debug(
-            f"Inputs: data inputs(first 5) {inputs[:5]} outputs: {outputs}"
+            f"Inputs: data inputs(first 5) {inputs[:5]} outputs: {outputs} "
             f"Parameters files: {parameters}")  # log_revert
 
         self.inputs = inputs
-        self.outputs = list(filter(None, (Run.get_handler(handler_name) for handler_name in outputs)))
-        self.parameters = Run.get_parameters(parameters)
+        self.outputs = list(filter(None, (Runtime.get_handler(handler_name) for handler_name in outputs)))
+        self.parameters = Runtime.get_parameters(parameters)
         self.step = max([STEPS[output] for output in outputs])
 
         # If input is a directory not a filename, get all possible data files in the directory
@@ -62,8 +62,8 @@ class Run:
         An output handler function if it matches the handler_name, otherwise None
         """
         try:
-            handler = import_module(f'.{handler_name}',
-                                              'outputs')
+            handler = import_module(f'.output_handlers.{handler_name}',
+                                              'rhythmo')
             if hasattr(handler, 'output_handler'):
                 return handler.output_handler
 
@@ -92,12 +92,12 @@ class Run:
         Parameters class
         """
 
-        default = Parameters()
+        default = Parameters.build_empty()
 
         if parameters_file is None:
-            return default()
+            return default
 
-        # Load specified json
+        # Load specified json file
         try:
             new_params = read_json(parameters_file)
         except FileNotFoundError as e:
@@ -105,7 +105,7 @@ class Run:
             raise e
 
         # update parameters
-        updated = default()
+        updated = default
         for key in new_params:
             updated.__dict__[key] = new_params[key]
 
@@ -128,7 +128,7 @@ class Run:
 
         for input_file in self.inputs:
             started = time.perf_counter()
-            logger.info(f"[{input_data}] START rhythmo (S000)")
+            logger.info(f"[{input_file}] START rhythmo (S000)")
 
             # Open input data
             input_data = read_input(input_file)
@@ -142,7 +142,9 @@ class Run:
                 continue
 
             # Drop all columns except timestamp and value
-            rhythmo_inputs = input_data.drop(columns = [col for col in input_data.columns if col not in ['timestamp', 'value']])
+            rhythmo_inputs = RhythmoInput(data = input_data.drop(
+                columns = [col for col in input_data.columns if col not in ['timestamp', 'value']]),
+                id_number = os.path.split(input_file)[-1].split('.')[0]) ## remove file extension and path
 
             try:
                 rhythmo_outputs = self._run_rhythmo(rhythmo_inputs)

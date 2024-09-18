@@ -10,7 +10,7 @@ pip install -r requirements.txt
 Rythmo can be run using:
 
 ```bash
-python -m run run --inputs {path/to/data.csv} --outputs predict_future_phases
+python -m rhythmo run --inputs {path/to/data.csv} --outputs predict_future_phases
 ```
 
 ### Inputs
@@ -38,5 +38,5 @@ All other parameters will use default values.
 Once the json file is created, use the -p flag to point to the json file location:
 
 ```bash
-python -m run run --inputs {path/to/data.csv} --outputs predict_future_phases --parameters change_parameters.json
+python -m rhythmo run --inputs {path/to/data.csv} --outputs predict_future_phases --parameters change_parameters.json
 ```

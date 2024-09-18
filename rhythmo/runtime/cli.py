@@ -1,6 +1,6 @@
 import click
 from logger.logger import get_logger
-from main import Run
+from rhythmo.runtime.main import Runtime
 
 logger = get_logger(__name__)
 
@@ -22,7 +22,7 @@ def cli() -> None:
               help="Location of parameters file name in json format (e.g., ), allowing default paramters to be overwritten.")
 def run(inputs, outputs, parameters) -> None:
     logger.debug("=== Running command ===")
-    runtime = Run(
+    runtime = Runtime(
         inputs.split(',') if inputs else None,
         outputs.split(',') if outputs else ["predict_future_phases"],
         parameters if parameters else None)
