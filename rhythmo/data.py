@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass, field
-from typing import Optional, Sequence
+from typing import Optional
 
 import pandas as pd
 from logger.logger import get_logger
