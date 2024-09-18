@@ -15,6 +15,10 @@ class Parameters:
     data_type: str = "csv" # default is csv file, but can be "json" or "parquet"
     data_resampling_rate: str = '1H'  # default is hourly, but can be '1Min', '5Min', '1D', etc.
     wavelet_waveform: str = "morlet" # default is morlet, but can be "gaussian", "mexican_hat", etc.. # TODO: add support for other waveforms
+    min_cycles: int = 3 # default is 3, but can be any integer value. This determines the minimum number of cycles to observe for the wavelet transform.
+    min_cycle_period: int = 2 # in days
+    max_cycle_period: Optional[int] = None # in days, default is set to data duration divided by "min_cycles"
+    cycle_step_size = 0.5 # in days, default is 0.5, but can be any float value. This determines the step size for the cycle periods to be used in the wavelet.
     cycle_selection_method: str = 'prominence' # default is 'prominence', but can be 'power' or 'relative power'
     cycle_period: Optional[float] = None # default is None (automatically selects strongest), but can be any float value (in days). This determines the cycle period to filter the signal at and project the cycle at etc.
     bandpass_cutoff_percentage: float = 33 # default is +/- 33%, but can be any float value (as a percentage). This determines the bandpass filter cutoff percentages either side of the cycle period.

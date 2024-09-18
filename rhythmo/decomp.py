@@ -1,15 +1,23 @@
 import pycwt as cwt
+import pandas as pd
+import numpy as np
+from scipy.signal import find_peaks
+
+from logger.logger import get_logger
+logger = get_logger(__name__)
+
+SECONDS_IN_A_DAY = 60 * 60 * 24
 
 def create_wavelet(wavelet_waveform):
     """Based on the chosen waveform, creates the relevant wavelet."""
-    if wavelet_waveform = "Mortlet":
+    if wavelet_waveform == "mortlet":
         WAVELET = cwt.Mortlet(6)
-    elif wavelet_waveform = "Gaussian":
+    elif wavelet_waveform == "gaussian":
         WAVELET = cwt.DOG(m=2)
-    elif wavelet_waveform = "Mexican Hat":
+    elif wavelet_waveform == "mexican_hat":
         WAVELET = cwt.MexicanHat()
-    elif wavelet_waveform = "":
-        WAVELET = cwt.
+    # elif wavelet_waveform = "":
+    #     WAVELET = cwt.
     else:
         WAVELET = cwt.Mortlet(6)
 
@@ -23,17 +31,21 @@ def  compute_alpha(resampled_data):
     alpha, _, _ = cwt.ar1(resampled_data_array) 
     return alpha, resampled_data_array
 
-def get_cwt_frequencies(resampled_data):
-    """Calculates the frequencies over which the CWT is computed."""
+def get_cwt_frequencies(resampled_data, min_cycles, min_cycle_period, max_cycle_period, cycle_step_size):
+    """Calculates the frequencies (in 1/day) over which the CWT is computed."""
 
-    # Calculates the total duration in days between the first and last timestamps in the resampled data and divides by 3
-    data_duration = (resampled_data['timestamp'].iloc[-1] - resampled_data['timestamp'].iloc[0]).total_seconds()/(60 * 60 * 24)/3 
+    # Calculates the total duration in days between the first and last timestamps in the resampled data and divides by the minimum number of cycles
+    data_duration = (resampled_data['timestamp'].iloc[-1] - resampled_data['timestamp'].iloc[0]).total_seconds() / SECONDS_IN_A_DAY 
+    max_period = int(data_duration / min_cycles)
     
+    if max_cycle_period:
+        max_period = min(max_cycle_period, max_period)
+
     # Generates values from 2 to up until 'int(n)' calculated above, with a step size of 0.5
-    periods = np.arange(2, int(data_duration), 0.5) 
+    periods = np.arange(min_cycle_period, max_period, cycle_step_size)
 
     frequencies_cwt = (1/periods)
-    return frequencies_cwt
+    return frequencies_cwt # in days
 
 def cont_wavelet_transform(resampled_data_array, sampling_interval, WAVELET, frequencies_cwt):
     """ Continuous wavelet transform (CWT)
@@ -68,8 +80,6 @@ def cont_wavelet_transform(resampled_data_array, sampling_interval, WAVELET, fre
     transformed_wavelet, scales, frequencies_scales, _, _, _ = cwt.cwt(signal = resampled_data_array, dt = sampling_interval, wavelet = WAVELET, freqs = frequencies_cwt) 
 
     return transformed_wavelet, scales, frequencies_scales
-
-
 
 
 def get_global_significance(var, sampling_interval, scales, alpha, DOF, WAVELET):
@@ -132,18 +142,38 @@ def get_signifance_levels(sampling_interval, scales, alpha, WAVELET): # for four
     significance_levels, fft_theor = cwt.significance(1.0, sampling_interval, scales, 0, alpha, significance_level=0.95, wavelet=WAVELET) 
     return significance_levels, fft_theor
 
-def decomp(rhythmo_inputs, rhythmo_outputs, parameters): 
+def get_sampling_rate(data_resampling_rate):
+    """Convert string sampling rate to integer sampling rate (per day)"""
+    if data_resampling_rate == '1H':
+        return 24
+    elif data_resampling_rate == '1D':
+        return 1
+    elif data_resampling_rate == '1Min':
+        return 24 * 60
+    elif data_resampling_rate == '5Min':
+        return 24 * 60 / 5
+    else:
+        # TODO: add more options in
+        # return error
+        logger.error(f"Sampling rate of {data_resampling_rate} unknown. Either add this functionality or select one of: 1H, 1D, 1Min, 5Min", exc_info=True)
+        raise ValueError(f"Sampling rate of {data_resampling_rate} unknown. Either add this functionality or select one of: 1H, 1D, 1Min, 5Min")
 
-    waveform = create_wavelet(rhythmo_inputs.wavelet_waveform)
+
+def decomp(_rhythmo_inputs, rhythmo_outputs, parameters): 
+
+    waveform = create_wavelet(parameters.wavelet_waveform)
 
     alpha, resampled_data_array = compute_alpha(rhythmo_outputs.resampled_data)
 
-    # sampling interval of 1 (units depends on time scale of signal- days, seconds, hrs)
-    sampling_interval = rhythmo_inputs.data_resampling_rate
+    sampling_rate = get_sampling_rate(parameters.data_resampling_rate) # samples per day
 
-    frequencies_cwt = get_cwt_frequencies(rhythmo_outputs.resampled_data)
+    frequencies_cwt = get_cwt_frequencies(rhythmo_outputs.resampled_data,
+                                          min_cycles = parameters.min_cycles,
+                                          min_cycle_period = parameters.min_cycle_period,
+                                          max_cycle_period = parameters.max_cycle_period,
+                                          cycle_step_size = parameters.cycle_step_size)
 
-    transformed_wavelet, scales, frequencies_scales = cont_wavelet_transform(resampled_data_array, sampling_interval, waveform, frequencies_cwt)
+    transformed_wavelet, scales, frequencies_scales = cont_wavelet_transform(resampled_data_array, sampling_rate, waveform, frequencies_cwt)
 
     # Degrees of freedom (DOF) 
     dof = resampled_data_array.size - scales  
@@ -151,12 +181,12 @@ def decomp(rhythmo_inputs, rhythmo_outputs, parameters):
     var = resampled_data_array.std()**2 
 
     glbl_power = power.mean(axis=1) # global wavelet power... global power* variance..
-    period = 1 / freqs # goes into dataframe, first column
+    period = 1 / frequencies_scales # goes into dataframe, first column
     power = glbl_power*var # second column
-    ind_peaks = scipy.signal.find_peaks(var * glbl_power)[0] # detects peaks in the data, indices stored in ind_peaks 
+    ind_peaks = find_peaks(var * glbl_power)[0] # detects peaks in the data, indices stored in ind_peaks 
     peaks = [1 if i in ind_peaks else 0 for i in range(len(period))] # 4th column
 
-    global_significance, wavespec_theor = get_global_significance(var, sampling_interval, scales, alpha, dof, waveform) # 3rd column
+    global_significance, wavespec_theor = get_global_significance(var, sampling_rate, scales, alpha, dof, waveform) # 3rd column
 
     #significance_levels, fft_theor = get_signifance_levels(sampling_interval, scales, alpha, waveform)
 

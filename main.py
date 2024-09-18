@@ -8,12 +8,12 @@ from logger.logger import get_logger
 from dataclass import Parameters, RhythmoOutput
 from utils import check_input, read_input, read_json
 
-from process import process
-from decomp import decomp
-from selection import selection
-from track import track
-from project import project
-from forecast import forecast
+from rhythmo.process import process
+from rhythmo.decomp import decomp
+# from rhythmo.selection import selection
+# from rhythmo.track import track
+# from rhythmo.project import project
+# from rhythmo.forecast import forecast
 
 logger = get_logger(__name__)
 
@@ -167,16 +167,16 @@ class Run:
         if self.step == 1:
             return rhythmo_outputs
 
-        rhythmo_outputs = selection(rhythmo_inputs, rhythmo_outputs, self.parameters)
-        rhythmo_outputs = track(rhythmo_inputs, rhythmo_outputs, self.parameters)
-        if self.step == 2:
-            return rhythmo_outputs
+        # rhythmo_outputs = selection(rhythmo_inputs, rhythmo_outputs, self.parameters)
+        # rhythmo_outputs = track(rhythmo_inputs, rhythmo_outputs, self.parameters)
+        # if self.step == 2:
+        #     return rhythmo_outputs
 
-        rhythmo_outputs = project(rhythmo_inputs, rhythmo_outputs, self.parameters)
-        if self.step == 3:
-            return rhythmo_outputs
+        # rhythmo_outputs = project(rhythmo_inputs, rhythmo_outputs, self.parameters)
+        # if self.step == 3:
+        #     return rhythmo_outputs
 
-        rhythmo_outputs = forecast(rhythmo_inputs, rhythmo_outputs, self.parameters)
+        # rhythmo_outputs = forecast(rhythmo_inputs, rhythmo_outputs, self.parameters)
 
         return rhythmo_outputs
 
