@@ -11,31 +11,36 @@ SECONDS_IN_A_DAY = 60 * 60 * 24
 def create_wavelet(wavelet_waveform):
     """Based on the chosen waveform, creates the relevant wavelet."""
     if wavelet_waveform == "mortlet":
-        WAVELET = cwt.Mortlet(6)
+        wavelet = cwt.Morlet(6)
     elif wavelet_waveform == "gaussian":
-        WAVELET = cwt.DOG(m=2)
+        wavelet = cwt.DOG(m=2)
     elif wavelet_waveform == "mexican_hat":
-        WAVELET = cwt.MexicanHat()
+        wavelet = cwt.MexicanHat()
     # elif wavelet_waveform = "":
-    #     WAVELET = cwt.
+    #     wavelet = cwt.
     else:
-        WAVELET = cwt.Mortlet(6)
+        wavelet = cwt.Morlet(6)
 
-    return WAVELET
+    return wavelet
 
-def  compute_alpha(resampled_data):
+def  compute_alpha(data):
     """ Calculates alpha, the autoregressive coefficient."""
 
     # Convert panda series ('value' column in the data) into NumPy arrays
-    resampled_data_array = resampled_data.value.to_numpy()
-    alpha, _, _ = cwt.ar1(resampled_data_array) 
-    return alpha, resampled_data_array
+    data_array = data['value'].to_numpy()
+    try:
+        alpha, _, _ = cwt.ar1(data_array)
+    except:
+        alpha = pd.Series(data_array[:-1]).corr(pd.Series(
+            data_array[1:]))  # alpha autocorr value for significance test
 
-def get_cwt_frequencies(resampled_data, min_cycles, min_cycle_period, max_cycle_period, cycle_step_size):
+    return alpha, data_array
+
+def get_cwt_frequencies(data, min_cycles, min_cycle_period, max_cycle_period, cycle_step_size):
     """Calculates the frequencies (in 1/day) over which the CWT is computed."""
 
     # Calculates the total duration in days between the first and last timestamps in the resampled data and divides by the minimum number of cycles
-    data_duration = (resampled_data['timestamp'].iloc[-1] - resampled_data['timestamp'].iloc[0]).total_seconds() / SECONDS_IN_A_DAY 
+    data_duration = (data['timestamp'].iloc[-1] - data['timestamp'].iloc[0]).total_seconds() / SECONDS_IN_A_DAY 
     max_period = int(data_duration / min_cycles)
     
     if max_cycle_period:
@@ -47,15 +52,15 @@ def get_cwt_frequencies(resampled_data, min_cycles, min_cycle_period, max_cycle_
     frequencies_cwt = (1/periods)
     return frequencies_cwt # in days
 
-def cont_wavelet_transform(resampled_data_array, sampling_interval, WAVELET, frequencies_cwt):
+def cont_wavelet_transform(data_array, sampling_rate, wavelet, frequencies_cwt):
     """ Continuous wavelet transform (CWT)
     
         Parameters
         ------------
-        signal = resampled_data_array: 
+        signal = data_array: 
             input time series data
-        dt = sampling_interval: 
-            Sampling interval (set to 1)
+        dt = sampling_rate: 
+            Sampling rate (in days)
         wavelet = WAVELET: 
             wavelet function being used for the transform (Morlet wavelet)
         freqs = frequencies_cwt: 
@@ -76,32 +81,29 @@ def cont_wavelet_transform(resampled_data_array, sampling_interval, WAVELET, fre
         fftfreqs: 
             Fourier frequencies corresponding to fft
     """
-    #transformed_wavelet, scales, frequencies_scales, coi, fft, fftfreqs = cwt.cwt(signal = resampled_data_array, dt = sampling_interval, wavelet = WAVELET, freqs = frequencies_cwt) 
-    transformed_wavelet, scales, frequencies_scales, _, _, _ = cwt.cwt(signal = resampled_data_array, dt = sampling_interval, wavelet = WAVELET, freqs = frequencies_cwt) 
+    transformed_wavelet, scales, frequencies_scales, _, _, _ = cwt.cwt(signal = data_array, dt = sampling_rate, wavelet = wavelet, freqs = frequencies_cwt) 
 
     return transformed_wavelet, scales, frequencies_scales
 
 
-def get_global_significance(var, sampling_interval, scales, alpha, DOF, WAVELET):
+def get_global_significance(var, sampling_rate, scales, alpha, dof, wavelet, significance_level = 0.95):
     """ Global significance of wavelet power spectrum.
         Parameters
         ------------
             var: 
                 Variance of signal
-            sampling_interval: 
-                Sampling interval
+            sampling_rate: 
+                Sampling rate (in days)
             scales: 
                 wavelet scales
-            1: 
-                background spectrum type (1 indicates an AR(1) process)
             alpha: 
                 AR1 coefficient, which models background spectrum
-            significance_level=0.95: 
-                significance level (95% confidence)
-            dof=DOF: 
+            dof: 
                 Degrees of freedom for wavelet power spectrum
-            wavelet=WAVELET: 
+            wavelet: 
                 wavelet function used (Morlet wavelet)
+            significance_level (default=0.95):
+                significance level (95% confidence)
         Returns
         ------------
             global_significance: 
@@ -109,38 +111,10 @@ def get_global_significance(var, sampling_interval, scales, alpha, DOF, WAVELET)
             wavespec_theor: 
                 theoretical wavelet spectrum used for significance testing (often ignored).
     """
-    global_significance, wavespec_theor = cwt.significance(var, sampling_interval, scales, 1, alpha, significance_level=0.95, dof=DOF, wavelet=WAVELET)
+    global_significance, _ = cwt.significance(var, sampling_rate, scales, 1, alpha=alpha, significance_level=significance_level, dof=dof, wavelet=wavelet)
     
-    return global_significance, wavespec_theor
+    return global_significance
 
-def get_signifance_levels(sampling_interval, scales, alpha, WAVELET): # for fourier transform don't use this
-    """ Pointwise significance of wavelet power spectrum.
-
-        Parameters
-        ------------
-            1.0: 
-                Background variance is set to 1
-            sampling_interval: 
-                Sampling interval
-            scales: 
-                wavelet scales
-            0: 
-                Indicates that background spectrum is white noise
-            alpha: 
-                AR1 coefficient, which models background spectrum
-            significance_level=0.95: 
-                significance level (95% confidence)
-            wavelet=WAVELET: 
-                wavelet function used (Morlet wavelet)
-        Returns
-        ------------
-            significance_levels: 
-                significance levels for wavelet power spectrum at each scale
-            fft_theor: 
-                theoretical Fourier spectrum used for significance testing
-    """
-    significance_levels, fft_theor = cwt.significance(1.0, sampling_interval, scales, 0, alpha, significance_level=0.95, wavelet=WAVELET) 
-    return significance_levels, fft_theor
 
 def get_sampling_rate(data_resampling_rate):
     """Convert string sampling rate to integer sampling rate (per day)"""
@@ -161,37 +135,34 @@ def get_sampling_rate(data_resampling_rate):
 
 def decomp(_rhythmo_inputs, rhythmo_outputs, parameters): 
 
-    waveform = create_wavelet(parameters.wavelet_waveform)
+    wavelet = create_wavelet(parameters.wavelet_waveform)
 
-    alpha, resampled_data_array = compute_alpha(rhythmo_outputs.resampled_data)
+    alpha, data_array = compute_alpha(rhythmo_outputs.standardized_data)
 
     sampling_rate = get_sampling_rate(parameters.data_resampling_rate) # samples per day
 
-    frequencies_cwt = get_cwt_frequencies(rhythmo_outputs.resampled_data,
+    frequencies_cwt = get_cwt_frequencies(rhythmo_outputs.standardized_data,
                                           min_cycles = parameters.min_cycles,
                                           min_cycle_period = parameters.min_cycle_period,
                                           max_cycle_period = parameters.max_cycle_period,
                                           cycle_step_size = parameters.cycle_step_size)
 
-    transformed_wavelet, scales, frequencies_scales = cont_wavelet_transform(resampled_data_array, sampling_rate, waveform, frequencies_cwt)
+    transformed_wavelet, scales, frequencies_scales = cont_wavelet_transform(data_array, sampling_rate, wavelet, frequencies_cwt)
 
     # Degrees of freedom (DOF) 
-    dof = resampled_data_array.size - scales  
+    dof = data_array.size - scales  
     # Variance of resampled data:
-    var = resampled_data_array.std()**2 
+    var = data_array.std()**2 
 
+    power = np.abs(transformed_wavelet)**2 # wavelet power spectrum
     glbl_power = power.mean(axis=1) # global wavelet power... global power* variance..
     period = 1 / frequencies_scales # goes into dataframe, first column
     power = glbl_power*var # second column
     ind_peaks = find_peaks(var * glbl_power)[0] # detects peaks in the data, indices stored in ind_peaks 
-    peaks = [1 if i in ind_peaks else 0 for i in range(len(period))] # 4th column
+    peaks = [1 if i in ind_peaks else 0 for i in range(len(period))]
 
-    global_significance, wavespec_theor = get_global_significance(var, sampling_rate, scales, alpha, dof, waveform) # 3rd column
+    global_significance = get_global_significance(var, sampling_rate, scales, alpha, dof, wavelet)
 
-    #significance_levels, fft_theor = get_signifance_levels(sampling_interval, scales, alpha, waveform)
-
-    dataframe = pd.DataFrame({"period": period, "power": power, "significance": global_significance, "peaks": peaks})
-
-    rhythmo_outputs.wavelet_data = dataframe ## some dataframe, 1 column is period, power output from wavelet, significance value at each period, add peak too (output to user)
+    rhythmo_outputs.wavelet_data = pd.DataFrame({"period": period, "power": power, "significance": global_significance, "peaks": peaks})
 
     return rhythmo_outputs

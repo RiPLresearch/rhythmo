@@ -52,18 +52,37 @@ class Parameters:
             return False
         return True
 
+    @staticmethod
+    def build_empty():
+        return Parameters()
+
     def to_dict(self):
         """Returns object of dataclass instance."""
         return asdict(self)
 
-# pylint: disable=too-many-instance-attributes
-# It doesn't make sense to split / merge any of these variables
+@dataclass
+class RhythmoInput:
+    """
+    Input data for Rhythmo
+    """
+    data: pd.DataFrame = field(default_factory=lambda: pd.DataFrame(columns=['timestamp', 'value'])) # dataframe with columns: timestamp and value
+    id_number: Optional[str] = None # str, unique identifier for the data
+
+    @staticmethod
+    def build_empty():
+        return RhythmoInput()
+
+    def to_dict(self):
+        """Returns object of dataclass instance."""
+        return asdict(self)
+
 @dataclass
 class RhythmoOutput:
     """
     Output data from Rhythmo
     """
     resampled_data: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
+    standardized_data: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
     best_segment: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
     wavelet_data: Optional[pd.DataFrame] = None # dataframe with columns: period, power, significance, peak (1 or 0)
     cycle_period: Optional[float] = None # float value (in days)

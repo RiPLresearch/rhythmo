@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import copy
 
-from utils import nearest
+from rhythmo.utils import nearest
 
 from logger.logger import get_logger
 logger = get_logger(__name__)
@@ -18,7 +18,8 @@ def timestamps_to_dates(rhythmo_inputs):
 
 def resample_data(data, data_resampling_rate):
     # Resamples the data to hourly intervals, calculating the resampled value as the average of the data within each interval.
-    resample_data = data.resample(data_resampling_rate, on='timestamp').mean().reset_index()['value']
+    resample_data = data.resample(data_resampling_rate, on='timestamp').mean().reset_index()
+
     return resample_data
 
 def proportion_nans(df):
@@ -129,30 +130,31 @@ def data_standardize(df):
 def data_interpolate(df):
     """For any NaN values, the corresponding entry in 'value' is replaced by the mean of the column.""" 
 
-    df['value'][pd.isnull(df['value'])] = df['value'].mean() 
+    df.loc[pd.isnull(df['value']), 'value'] = df['value'].mean() 
     return df
 
 
 def process(rhythmo_inputs, rhythmo_outputs, parameters):
 
     # convert timestamps to dates
-    data = timestamps_to_dates(rhythmo_inputs)
+    data = timestamps_to_dates(rhythmo_inputs.data)
 
     # Resampling the data
     resampled_data = resample_data(data, parameters.data_resampling_rate)
 
     data_check, best_segment = check_sufficient_data(resampled_data)
     if data_check:
-        rhythmo_outputs.best_segment = best_segment
+        rhythmo_outputs.best_segment = best_segment ## TODO: add this so wavelet uses best_segment
     else:
         logger.error("Insufficient data for Rhythmo.",
                      exc_info=True)
         return
     
     # Standardize and interpolate the data
-    data_standardized = data_standardize(resampled_data)
-    data_interpolated = data_interpolate(data_standardized)
+    data_interpolated = data_interpolate(resampled_data)
+    data_standardized = data_standardize(data_interpolated)
     
     rhythmo_outputs.resampled_data = data_interpolated
+    rhythmo_outputs.standardized_data = data_standardized
 
     return rhythmo_outputs

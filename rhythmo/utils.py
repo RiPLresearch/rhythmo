@@ -31,10 +31,6 @@ def read_parquet(file_path: str):
     """Reads a parquet file and returns a pandas dataframe."""
     return pd.read_parquet(file_path)
 
-def read_json(file_path: str):
-    """Reads a json file and returns a pandas dataframe."""
-    return pd.read_json(file_path)
-
 def read_input(input_file: str) -> pd.DataFrame:
 
     """Reads an input file and returns a pandas dataframe."""

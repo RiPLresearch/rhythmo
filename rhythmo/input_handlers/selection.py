@@ -5,7 +5,7 @@ from scipy.signal import butter, sosfiltfilt, hilbert
 power = np.abs(rhythmo_outputs.transformed_wavelet) ** 2 # wavelet power spectrum. Squared magnitude of abs value of wavelet transform. Displays how power of different freqs changes over time
 glbl_power = power.mean(axis=1) # global wavelet power. Averages wavelet power over time, represents the avg power at each freq/scale.
 period = 1 / freqs # converting freqs to periods
-var = resampled_data_array.std()**2 # variance of the resampled data. This is used in significance testing. Variance = square of std.
+var = data_array.std()**2 # variance of the resampled data. This is used in significance testing. Variance = square of std.
 
 
 fft_power = np.abs(fft) ** 2 # Fourier power spectrum. Squared magnitude of Fourier transform. Outputs overall power for each freq, independent of time

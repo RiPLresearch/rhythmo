@@ -17,7 +17,7 @@ class CustomFormatter(JSONFormatter):
         if not hasattr(ls, 'task'):
             ls.task = None
 
-        log = {'app_name': 'risk_algo'}
+        log = {'app_name': 'rhythmo'}
         log.update(record)
         return super().to_json(log)
 
