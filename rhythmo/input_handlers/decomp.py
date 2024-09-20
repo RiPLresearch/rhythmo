@@ -157,7 +157,7 @@ def decomp(_rhythmo_inputs, rhythmo_outputs, parameters):
     power = np.abs(transformed_wavelet)**2 # wavelet power spectrum
     glbl_power = power.mean(axis=1) # global wavelet power... global power* variance..
     period = 1 / frequencies_scales # goes into dataframe, first column
-    power = glbl_power*var # second column
+    power = glbl_power * var # second column
     ind_peaks = find_peaks(var * glbl_power)[0] # detects peaks in the data, indices stored in ind_peaks 
     peaks = [1 if i in ind_peaks else 0 for i in range(len(period))]
 

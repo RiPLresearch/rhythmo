@@ -1,10 +1,12 @@
 from dataclasses import asdict, dataclass, field
-from typing import Optional
+from typing import Optional, Union
 
 import pandas as pd
 from logger.logger import get_logger
 
 logger = get_logger(__name__)
+
+Number = Union[float, int]
 
 @dataclass
 class Parameters:
@@ -16,12 +18,12 @@ class Parameters:
     data_resampling_rate: str = '1H'  # default is hourly, but can be '1Min', '5Min', '1D', etc.
     wavelet_waveform: str = "morlet" # default is morlet, but can be "gaussian", "mexican_hat", etc.. # TODO: add support for other waveforms
     min_cycles: int = 3 # default is 3, but can be any integer value. This determines the minimum number of cycles to observe for the wavelet transform.
-    min_cycle_period: int = 2 # in days
-    max_cycle_period: Optional[int] = None # in days, default is set to data duration divided by "min_cycles"
-    cycle_step_size = 0.5 # in days, default is 0.5, but can be any float value. This determines the step size for the cycle periods to be used in the wavelet.
+    min_cycle_period: Number = 2 # in days
+    max_cycle_period: Optional[Number] = None # in days, default is set to data duration divided by "min_cycles"
+    cycle_step_size: Number = 0.5 # in days, default is 0.5, but can be any float value. This determines the step size for the cycle periods to be used in the wavelet.
     cycle_selection_method: str = 'prominence' # default is 'prominence', but can be 'power' or 'relative power'
-    cycle_period: Optional[float] = None # default is None (automatically selects strongest), but can be any float value (in days). This determines the cycle period to filter the signal at and project the cycle at etc.
-    bandpass_cutoff_percentage: float = 33 # default is +/- 33%, but can be any float value (as a percentage). This determines the bandpass filter cutoff percentages either side of the cycle period.
+    cycle_period: Optional[Number] = None # default is None (automatically selects strongest), but can be any float value (in days). This determines the cycle period to filter the signal at and project the cycle at etc.
+    bandpass_cutoff_percentage: Number = 33 # default is +/- 33%, but can be any float value (as a percentage). This determines the bandpass filter cutoff percentages either side of the cycle period.
     projection_method: str = "linear"  # default is linear projection, but can be "prophet" for Facebook Prophet method #TODO: add support for this and ohter projection methods
     projection_duration: Optional[int] = None # if None, it will automatically select 4 * period of cycle. Otherwise this can be any integer value (in days).
     timing_of_future_phases: str = "regular_sampling" # default is regular_sampling to capture all phases of the cycle, but can be "peak_trough" or "peak_trough_rising_falling"
@@ -85,7 +87,7 @@ class RhythmoOutput:
     standardized_data: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
     best_segment: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
     wavelet_data: Optional[pd.DataFrame] = None # dataframe with columns: period, power, significance, peak (1 or 0)
-    cycle_period: Optional[float] = None # float value (in days)
+    cycle_period: Optional[Number] = None # float value (in days)
     filtered_cycle: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
 
     projected_cycle: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
