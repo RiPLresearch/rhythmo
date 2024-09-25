@@ -9,7 +9,7 @@ def butter_bandpass_filter_params(lowcut: float,
                                   fs: float,
                                   order: int = 2):
     """
-    Gets numerator and denominator of a filter.
+    Finds and returns parameters for the butterworth bandpass filter.
     
     Parameters
     ------------
@@ -40,7 +40,7 @@ def butter_bandpass_filter(data: list,
                            fs: float,
                            order: int = 2):
     """
-    Gets bandpass filtered values for a list of values.
+    Inputs unfiltered standardized data and returns filtered data using a butterworth bandpass filter.
  
     Parameters
     ----------
@@ -68,6 +68,10 @@ def butter_bandpass_filter(data: list,
 
 
 def find_filter_sampling_rate(data_resampling_rate):
+    """
+    Finds the filter sampling rate based on the user's desired sampling rate.
+    This takes in sampling rates of: 1 day, 1 hour, 1 minute, and 5 minutes.
+    """
     if data_resampling_rate == '1D':
         fs = 1
     elif data_resampling_rate == '1H':
@@ -81,6 +85,11 @@ def find_filter_sampling_rate(data_resampling_rate):
     return fs
 
 def track(_rhythmo_inputs, rhythmo_outputs, parameters):
+    """
+    Filters the standardized data over the period in which the strongest peak was found.
+    The user is able to select the specific cutoff percentages on either side of the cycle period.
+    The user is also able to select the rate at which the data is sampled.
+    """
     strongest_peak = rhythmo_outputs.cycle_period
 
     cutoff_percentage = parameters.bandpass_cutoff_percentage
