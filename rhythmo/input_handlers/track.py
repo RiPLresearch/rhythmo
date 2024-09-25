@@ -4,6 +4,34 @@ import pycwt as cwt # continuous wavelet spectral analysis
 import scipy
 from scipy.signal import butter, sosfiltfilt, hilbert # tools for signal processing (filtering, fourier transforms, wavelets)
 
+def find_filter_sampling_rate(data_resampling_rate):
+    """
+    Finds the filter sampling rate based on the user's desired sampling rate.
+    This takes in sampling rates of: 1 day, 1 hour, 1 minute, and 5 minutes.
+    Default sampling rate is hourly.
+
+    Parameters 
+    ------------
+    data_resampling_rate: string
+        data resampling rate
+
+    Returns
+    -------
+    fs: float
+        sampling rate
+    """
+    if data_resampling_rate == '1D':
+        fs = 1
+    elif data_resampling_rate == '1H':
+        fs = 24
+    elif data_resampling_rate == '1Min':
+        fs = 24 * 60
+    elif data_resampling_rate == '5Min':
+        fs = 24 * 12 
+    else:
+        raise Exception(f"{data_resampling_rate} is not a valid sampling rate, please either add the functionality or use one of: 1D, 1H, 1Min, 5Min")
+    return fs
+
 def butter_bandpass_filter_params(lowcut: float,
                                   highcut: float,
                                   fs: float,
@@ -65,24 +93,6 @@ def butter_bandpass_filter(data: list,
     filtered_data = sosfiltfilt(sos, data) 
             
     return filtered_data
-
-
-def find_filter_sampling_rate(data_resampling_rate):
-    """
-    Finds the filter sampling rate based on the user's desired sampling rate.
-    This takes in sampling rates of: 1 day, 1 hour, 1 minute, and 5 minutes.
-    """
-    if data_resampling_rate == '1D':
-        fs = 1
-    elif data_resampling_rate == '1H':
-        fs = 24
-    elif data_resampling_rate == '1Min':
-        fs = 24 * 60
-    elif data_resampling_rate == '5Min':
-        fs = 24 * 12 
-    else:
-        raise Exception(f"{data_resampling_rate} is not a valid sampling rate, please either add the functionality or use one of: 1D, 1H, 1Min, 5Min")
-    return fs
 
 def track(_rhythmo_inputs, rhythmo_outputs, parameters):
     """
