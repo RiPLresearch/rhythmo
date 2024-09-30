@@ -3,6 +3,8 @@ import numpy as np
 import pycwt as cwt # continuous wavelet spectral analysis
 import scipy
 from scipy.signal import butter, sosfiltfilt, hilbert # tools for signal processing (filtering, fourier transforms, wavelets)
+from logger.logger import get_logger
+logger = get_logger(__name__)
 
 def find_filter_sampling_rate(data_resampling_rate):
     """
@@ -29,7 +31,9 @@ def find_filter_sampling_rate(data_resampling_rate):
     elif data_resampling_rate == '5Min':
         fs = 24 * 12 
     else:
-        raise Exception(f"{data_resampling_rate} is not a valid sampling rate, please either add the functionality or use one of: 1D, 1H, 1Min, 5Min")
+        error_message = f"Data resampling rate {data_resampling_rate} is not valid. Please either add this functionality or select one of: 1D, 1H, 1Min, 5Min."
+        logger.error(error_message, exc_info=True)
+        raise ValueError(error_message)
     return fs
 
 def butter_bandpass_filter_params(lowcut: float,
