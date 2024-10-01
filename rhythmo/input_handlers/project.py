@@ -1,93 +1,128 @@
-# Projection
-def get_phases(cycle):
-    """
-    Gets instantaneous phases for significant HR cycle with a given period using Hilbert transform
-    Returns phase values of cycle
-    """
-    hilbert_arr = hilbert(cycle)  # hilbert transform
-    phase = np.angle(hilbert_arr)  # get instantaneous phases. Returns the angle (or phase) of each complex number in hilbert_arr
-    return phase
-
-
-def get_phases_future(time_in_past, cycle_phase):
-    """
-    Forecast future phases for a given cycle using a linear model
-    Phases must first be converted to cumulative phase (strictly increasing, rather than cyclical)
-    in order to avoid drops from pi to -pi when phase is kept cyclical
-    """
-    # model cumulative phases such as 0, 2*pi, 4*pi, .... n*pi
-    item_arr = [] # empty list
-    n = 0 # keeps track of # phase cycles (i.e., how many times the phase has wrapped around).
-
-    # Unwrap phases to be within (pi, inf), i.e. cumulative, rather than (-pi, pi)
-    # (eg phase = 0 -> 4*pi, if 2nd cycle)
-    for i, _ in enumerate(cycle_phase):
-        item_arr.append(cycle_phase[i] + 2 * (n + 1) * np.pi) # For each phase value in cycle_phase, adjust it by adding 2 * (n + 1) * np.pi
-                # Adjustment accounts for phase wrapping around by adding an appropriate multiple of 2 * np.pi
-                # Variable n tracks how many times the phase has wrapped around (crossed from + to - values)
-        if cycle_phase[i] > 0:
-            if i < len(cycle_phase) - 1 and cycle_phase[i + 1] > 0: # if current phase value is positive, check whether next phase value is positive
-                continue
-            n += 1
-
-    # develop a linear model for cumulative/unwrapped phases
-    a = np.array(time_in_past).reshape(-1, 1) # Converts time_in_past into a NumPy array
-    y = np.array(item_arr).reshape(-1, 1) # Reshapes the array to be a column vector with one column. Ensures correct shape for linear regression below
-    reg1 = LinearRegression() # Facebook prophet method? people can choose projection method (linear regression, linear projection, prophet projection).. look at way she projects cycles into future
-    reg1.fit(a, y) 
-    """ a: feature matrix/independent variable). Reshaped version of time_in_past
-        y: target matrix (dependent variable), reshaped version of item_arr.
-        fit: Fits the linear regression model 
-    """
-
-    # get timestamps to project phases from
-    timestamp_dif = time_in_past.iloc[-1] - time_in_past.iloc[-2] # Computes difference btw the last and second-to-last time points. Result is a time delta
-    time_in_future = np.arange(time_in_past.iloc[-1], time_in_past.iloc[-1] + timestamp_dif*1000, timestamp_dif)
-            # generates an array of future time points starting from the last time point in time_in_past, 
-            # extending into the future by timestamp_dif * 1000, with intervals of timestamp_dif
-
-
-    # project future cycle phases from linear model
-    phases_in_future = [reg1.coef_[0][0] * t + reg1.intercept_[0] for t in time_in_future]
-            # reg1.coef_: coefficient (slope) of linear regression model
-            # reg1.coef_[0][0] extracts the coefficient for the single feature (time). When * t: The predicted phase component due to the time t
-            # reg1.intercept_: intercept of linear regression model. w/ [0] it is the constant term added to the predicted phase.
-
-
-    # re-wrap phases to be from -pi to pi
-    round_phase = []
-    for future_phase in phases_in_future: # loop through every value in phases_in_future
-        phase = future_phase - (future_phase // (2 * np.pi)) * (2 * np.pi) # Computes the integer number of full 2π cycles in fut_phase. Normalizes future_phase to a value within the range of -2pi to 2pi
-        round_phase.append(phase - (2 * np.pi) if phase > np.pi else phase)
-            # phase - (2 * np.pi): Adjusts the phase by subtracting 2pi if it is above pi, bringing it within range of -pi to pi
-            # else phase: If the phase is within the range, append it as-is.
-
-    return time_in_future, round_phase
-        # time_in_future: list of future time points corresponding to phases_in_future
-        # round_phase: list of adjusted phase value
-
-
-def get_future_phases(time_in_past,
-                                hr_cycle):
-    """
-    Generates future phases of HR cycle
-    """
-
-    phases = get_phases(hr_cycle)  # get instantaneous phases of significant cycles
-    time_in_future, phase_cycles_future = get_phases_future(time_in_past, phases)
-
-    return phases, time_in_future, phase_cycles_future
-
-
-
-# Projection figure output:
+import pandas as pd
+import numpy as np
 import datetime
-### cycle prediction
-phases, time_in_future, phase_cycles_future = get_future_phases(smoothed_all_hr['timestamp'].apply(lambda x: x.timestamp() * 1000), smoothed_all_hr['value'])
+from statistics import LinearRegression
+from scipy.fftpack import hilbert
+from logger.logger import get_logger
+logger = get_logger(__name__)
 
-time_in_future = pd.to_datetime(time_in_future, unit='ms')
-avg_amplitude = np.percentile(smoothed_all_hr['value'], 70) - np.percentile(smoothed_all_hr['value'], 30)
-cycle_prediction = (avg_amplitude)*(np.cos(phase_cycles_future)) + smoothed_all_hr['value'].mean()
+def get_phases(cycle_data):
+    """
+    Finds the instantaneous phases values for the significant cycle  
+    within a given period using the Hilbert transform.
+
+    Parameters
+    ------------
+    cycle_data: array of float
+        significant cycle
+
+    Returns
+    -------
+    cycle_phase: array of float
+        instaneous phase (or angle) of cycle
+    """
+    hilbert_arr = hilbert(cycle_data)
+    cycle_phase = np.angle(hilbert_arr)
+    return cycle_phase
+
+def get_phase_arr(cycle_phase):
+    """
+    Phases are converted from cyclical phases (i.e. (-π, π)) to 
+    cumulative phases (strictly increasing, i.e. 0, 2*π, 4*π, .... n*π)
+    in order to avoid drops from π to -π when phase is kept cyclical.
+    Returns an array containing these cumulative phases.
+
+    Parameters
+    ------------
+    cycle_phase: array of float
+        instaneous phase (or angle) of cycle
+
+    Returns
+    -------
+    cumulative_phase: array of float
+        array of cumulative phases
+    """
+    n = 0 
+    cumulative_phase = [phase + 2 * (n+1) * np.pi
+                for i, phase in enumerate(cycle_phase)
+                if (phase > 0 and (i == len(cycle_phase) - 1 or cycle_phase[i+1] <= 0)) or (n := n+1)]
+    return cumulative_phase
+
+def get_phases_future(cycle_projection_method, time_in_past, cumulative_phase):
+    """
+    Based on the selected cycle projection method (i.e., linear regression or Facebook Prophet),
+    develops a model for the cumulative/unwrapped phases. Then forecasts future phases for a given 
+    cycle using the selected cycle projection model.
+
+    Parameters
+    ------------
+    cycle_projection_method: str
+        selected cycle projection method
+    time_in_past: array of float
+        timestamps of the cycle data
+    cumulative_phase: array of float
+        array of cumulative phases
+
+    Returns
+    -------
+    projection_model:
+        projection model (linear or prophet)
+    time_in_future: array of float
+        list of future time points corresponding to phases_in_future
+    circular_phase: array of float
+        list of adjusted phase value
+    """
+
+    # Finds timestamps to project phases from:
+    timestamp_dif = time_in_past.iloc[-1] - time_in_past.iloc[-2]
+    time_in_future = np.arange(time_in_past.iloc[-1], time_in_past.iloc[-1] + timestamp_dif*1000, timestamp_dif)
+    
+    if cycle_projection_method == 'linear':
+        # Fitting the linear regression model:
+        a = np.array(time_in_past).reshape(-1, 1)
+        y = np.array(cumulative_phase).reshape(-1, 1)
+        projection_model = LinearRegression()
+        projection_model.fit(a, y)
+
+        # Projecting future cycle phases from linear model:
+        phases_in_future = [projection_model.coef_[0][0] * t + projection_model.intercept_[0] for t in time_in_future]
+
+    elif cycle_projection_method == 'prophet':
+        projection_model = 1# insert facebook prophet model
+        phases_in_future = 1# insert FB prophet model
+
+    else:
+        error_message = f"Cycle projection method {cycle_projection_method} is not valid. Please either add this functionality or select one of: linear, prophet."
+        logger.error(error_message, exc_info=True)
+        raise ValueError(error_message)
+
+    # Converts cumulative phases into circular phases by re-wrapping phases to be from -π to π
+    circular_phase = [phase - (2 * np.pi) if phase > np.pi else phase
+                      for future_phase in phases_in_future
+                      for phase in [future_phase - (future_phase // (2 * np.pi)) * (2 * np.pi)]]
+    
+    return time_in_future, circular_phase
 
 
-#def project(rhythmo_inputs, rhythmo_outputs, parameters):
+def project(_rhythmo_inputs, rhythmo_outputs, parameters):
+    """
+    Projects the cycle into the future based on the selected cycle projection method (i.e., linear regression or Facebook Prophet).
+    If the user inputs a cycle projection method, then the method is used to output a forecast of future phases of the cycle.
+    If the user has not provided a cycle projection method, go through with linear regression.
+    """
+    cycle_projection_method = parameters.projection_method
+    standardized_data = rhythmo_outputs.standardized_data
+    cycle_data = standardized_data['value']
+
+    time_in_past = standardized_data['timestamp'].apply(lambda x: x.timestamp() * 1000)
+
+    cycle_phase = get_phases(cycle_data)
+    cumulative_phase = get_phase_arr(cycle_phase)
+    time_in_future, phase_cycles_future = get_phases_future(cycle_projection_method, time_in_past, cumulative_phase)
+
+    time_in_future = pd.to_datetime(time_in_future, unit='ms')
+    avg_amplitude = np.percentile(cycle_data, 70) - np.percentile(cycle_data, 30)
+    projected_cycle = (avg_amplitude)*(np.cos(phase_cycles_future)) + cycle_data.mean()
+
+    rhythmo_outputs.projected_cycle = projected_cycle
+    return rhythmo_outputs
