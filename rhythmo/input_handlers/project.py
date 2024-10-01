@@ -96,7 +96,7 @@ def get_phases_future(cycle_projection_method, time_in_past, cumulative_phase):
         projection_model.fit(ds, y)
 
         # Projecting future cycle phases from prophet model:
-        phases_in_future = 1# insert projection code
+        phases_in_future = 1## TODO: insert projection code
 
     else:
         error_message = f"Cycle projection method {cycle_projection_method} is not valid. Please either add this functionality or select one of: linear, prophet."
