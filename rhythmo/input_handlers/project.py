@@ -3,6 +3,7 @@ import numpy as np
 import datetime
 from statistics import LinearRegression
 from scipy.fftpack import hilbert
+from prophet import Prophet
 from logger.logger import get_logger
 logger = get_logger(__name__)
 
@@ -88,8 +89,14 @@ def get_phases_future(cycle_projection_method, time_in_past, cumulative_phase):
         phases_in_future = [projection_model.coef_[0][0] * t + projection_model.intercept_[0] for t in time_in_future]
 
     elif cycle_projection_method == 'prophet':
-        projection_model = 1# insert facebook prophet model
-        phases_in_future = 1# insert FB prophet model
+        # Fitting the facebook prophet model:
+        ds = np.array(time_in_past).reshape(-1, 1)
+        y = np.array(cumulative_phase).reshape(-1, 1)
+        projection_model = Prophet(uncertainty_samples=0)
+        projection_model.fit(ds, y)
+
+        # Projecting future cycle phases from prophet model:
+        phases_in_future = 1# insert projection code
 
     else:
         error_message = f"Cycle projection method {cycle_projection_method} is not valid. Please either add this functionality or select one of: linear, prophet."
