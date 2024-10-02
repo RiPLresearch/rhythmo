@@ -108,8 +108,8 @@ def track(_rhythmo_inputs, rhythmo_outputs, parameters):
 
     cutoff_percentage = parameters.bandpass_cutoff_percentage
 
-    lowcut = ((1 - cutoff_percentage/100) * strongest_peak)
-    highcut = ((1 + cutoff_percentage/100) * strongest_peak) 
+    lowcut = 1/((1 + cutoff_percentage/100) * strongest_peak)
+    highcut = 1/((1 - cutoff_percentage/100) * strongest_peak) 
     fs = find_filter_sampling_rate(parameters.data_resampling_rate)
     order = 2 # input for the user? could change 
 

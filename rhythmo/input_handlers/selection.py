@@ -75,7 +75,7 @@ def selection(_rhythmo_inputs, rhythmo_outputs, parameters):
             logger.error(error_message, exc_info=True)
             raise ValueError(error_message)
     else:
-        strongest_peak = find_strongest_peak(parameters.cycle_selection_method, parameters.wavelet_data)
+        strongest_peak = find_strongest_peak(parameters.cycle_selection_method, rhythmo_outputs.wavelet_data)
         rhythmo_outputs.cycle_period = strongest_peak
 
     return rhythmo_outputs

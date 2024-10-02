@@ -10,14 +10,14 @@ from rhythmo.data import Parameters, RhythmoOutput, RhythmoInput
 from rhythmo.utils import check_input, read_input, read_json
 from rhythmo.input_handlers.process import process
 from rhythmo.input_handlers.decomp import decomp
-# from rhythmo.input_handlers.selection import selection
-# from rhythmo.input_handlers.track import track
-# from rhythmo.input_handlers.project import project
-# from rhythmo.input_handlers.forecast import forecast
+from rhythmo.input_handlers.selection import selection
+from rhythmo.input_handlers.track import track
+from rhythmo.input_handlers.forecast import forecast
+# from rhythmo.input_handlers.schedule import schedule
 
 logger = get_logger(__name__)
 
-STEPS = {"get_frequencies": 1, "track_cycle": 2, "project_cycle": 3, "predict_future_phases": 4}
+STEPS = {"decompose_signal": 1, "track_cycle": 2, "forecast_cycle": 3, "get_schedule": 4}
 
 class Runtime:
 
@@ -163,22 +163,22 @@ class Runtime:
         """Runs rhythmo and returns the outputs"""
 
         rhythmo_outputs = RhythmoOutput.build_empty()
-
+        
         rhythmo_outputs = process(rhythmo_inputs, rhythmo_outputs, self.parameters)
         rhythmo_outputs = decomp(rhythmo_inputs, rhythmo_outputs, self.parameters)
         if self.step == 1:
             return rhythmo_outputs
 
-        # rhythmo_outputs = selection(rhythmo_inputs, rhythmo_outputs, self.parameters)
-        # rhythmo_outputs = track(rhythmo_inputs, rhythmo_outputs, self.parameters)
-        # if self.step == 2:
-        #     return rhythmo_outputs
+        rhythmo_outputs = selection(rhythmo_inputs, rhythmo_outputs, self.parameters)
+        rhythmo_outputs = track(rhythmo_inputs, rhythmo_outputs, self.parameters)
+        if self.step == 2:
+            return rhythmo_outputs
 
-        # rhythmo_outputs = project(rhythmo_inputs, rhythmo_outputs, self.parameters)
-        # if self.step == 3:
-        #     return rhythmo_outputs
+        rhythmo_outputs = forecast(rhythmo_inputs, rhythmo_outputs, self.parameters)
+        if self.step == 3:
+            return rhythmo_outputs
 
-        # rhythmo_outputs = forecast(rhythmo_inputs, rhythmo_outputs, self.parameters)
+        # rhythmo_outputs = schedule(rhythmo_inputs, rhythmo_outputs, self.parameters)
 
         return rhythmo_outputs
 
