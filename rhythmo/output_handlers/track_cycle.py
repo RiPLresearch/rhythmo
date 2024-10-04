@@ -1,4 +1,5 @@
-
+import numpy as np
+import plotly.graph_objects as go 
 from logger.logger import get_logger
 logger = get_logger(__name__)
 
@@ -9,11 +10,6 @@ def find_reverse_normalization(filtered_data, std_data, mean_data):
     """
     data_reverse_normalized = (std_data * filtered_data)/mean_data
     return data_reverse_normalized
-
-std_data = stdev(parameters.resampled_data['value'])
-mean_data = np.mean(parameters.resampled_data['value'])
-data_reverse_normalized = find_reverse_normalization(filtered_standardized_data, std_data, mean_data)
-    # reflecting min/max or variance... standardizing so 0 mean and 1 stdev
 
 def rescale_data(data):
     """
@@ -26,23 +22,30 @@ def rescale_data(data):
 
 
 def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
+    resampled_data = rhythmo_outputs.resampled_data
     filtered_standardized_data = rhythmo_outputs.filtered_cycle
-    
+    strongest_peak = rhythmo_outputs.cycle_period
+
+    std_data = stdev(parameters.resampled_data['value'])
+    mean_data = np.mean(parameters.resampled_data['value'])
+    data_reverse_normalized = find_reverse_normalization(filtered_standardized_data['value'], std_data, mean_data)
+        # reflecting min/max or variance... standardizing so 0 mean and 1 stdev
+
     # Outputs the cycle figure:
     fig = go.Figure()
     fig.add_trace(
-            go.Scatter(x=hr_resample['timestamp'], 
-                    y=hr_resample['value'], 
-                    mode='lines', 
-                    name='heart rate',
-                    line={'color': 'rgb(115,115,115)'}))
+            go.Scatter(x = resampled_data['timestamp'], 
+                    y = resampled_data['value'], 
+                    mode = 'lines', 
+                    name = 'heart rate',
+                    line = {'color': 'rgb(115,115,115)'}))
 
-    fig.add_trace(go.Scatter(x=smoothed_all_hr['timestamp'], 
-                            y=smoothed_all_hr['value'], 
-                            mode='lines', name=f'{strongest_peak} day cycle', 
-                            line={'color': 'tomato'}))
+    fig.add_trace(go.Scatter(x = filtered_standardized_data['timestamp'], 
+                            y = filtered_standardized_data['value'], 
+                            mode = 'lines', name=f'{strongest_peak} day cycle', 
+                            line = {'color': 'tomato'}))
 
-    fig.update_layout(xaxis_title='Time',
-                    yaxis_title='Heart Rate',
-                    showlegend=True)
+    fig.update_layout(xaxis_title = 'Time',
+                    yaxis_title = 'Heart Rate',
+                    showlegend = True)
     return fig

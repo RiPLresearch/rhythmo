@@ -1,5 +1,5 @@
 # Rhythmo
-Rythmo analyses physiological rhythms by identifying ultradian, circadian and circadian cycles and predicting future phases of cycles. This allows researchers to better understand the timing of biological processes and optimise study designs, making it ideal for scheduling interventions, measurements, or data collection during key phases of the cycle.
+Rhythmo analyses physiological rhythms by identifying ultradian, circadian and circadian cycles and predicting future phases of cycles. This allows researchers to better understand the timing of biological processes and optimise study designs, making it ideal for scheduling interventions, measurements, or data collection during key phases of the cycle.
 
 This repository is best suited for Python version 3.11.8
 
@@ -8,7 +8,7 @@ To install all dependencies, run:
 pip install -r requirements.txt
 ```
 
-Rythmo can be run using:
+Rhythmo can be run using:
 
 ```bash
 python -m rhythmo run --inputs {path/to/data.csv} --outputs get_schedule
@@ -25,20 +25,20 @@ Add description of what user needs to do w/ inputs & outputs here -- specify all
 ### Parameters
 List all parameters and what they do (use format in file Rachel sent). Add more explanation below, and talk about what it actually does
 
-    data_type: str = "csv" # default is csv file, but can be "json" or "parquet"
-    data_resampling_rate: str = '1H'  # default is hourly, but can be '1Min', '5Min', '1D', etc.
-    wavelet_waveform: str = "morlet" # default is morlet, but can be "gaussian", "mexican_hat", etc.. # TODO: add support for other waveforms
-    min_cycles: int = 3 # default is 3, but can be any integer value. This determines the minimum number of cycles to observe for the wavelet transform.
-    min_cycle_period: Number = 2 # in days
-    max_cycle_period: Optional[Number] = None # in days, default is set to data duration divided by "min_cycles"
-    cycle_step_size: Number = 0.5 # in days, default is 0.5, but can be any float value. This determines the step size for the cycle periods to be used in the wavelet.
-    cycle_selection_method: str = 'prominence' # default is 'prominence', but can be 'power' or 'relative power'
-    cycle_period: Optional[Number] = None # default is None (automatically selects strongest), but can be any float value (in days). This determines the cycle period to filter the signal at and project the cycle at etc.
-    bandpass_cutoff_percentage: Number = 33 # default is +/- 33%, but can be any float value (as a percentage). This determines the bandpass filter cutoff percentages either side of the cycle period.
-    projection_method: str = "linear"  # default is linear projection, but can be "prophet" for Facebook Prophet method #TODO: add support for this and ohter projection methods
-    projection_duration: Optional[int] = None # if None, it will automatically select 4 * period of cycle. Otherwise this can be any integer value (in days).
-    timing_of_future_phases: str = "regular_sampling" # default is regular_sampling to capture all phases of the cycle, but can be "peak_trough" or "peak_trough_rising_falling"
-    number_of_future_phases: int = 8 # by default, rhythmo will predict 8 future phase times. Must be at least 1
+- **data_type**: str = "csv" # default is csv file, but can be "json" or "parquet"
+- **data_resampling_rate**: str = '1H'  # default is hourly, but can be '1Min', '5Min', '1D', etc.
+- **wavelet_waveform**: str = "morlet" # default is morlet, but can be "gaussian", "mexican_hat", etc.. # TODO: add support for other waveforms
+- **min_cycles**: int = 3 # default is 3, but can be any integer value. This determines the minimum number of cycles to observe for the wavelet transform.
+- **min_cycle_period**: Number = 2 # in days
+- **max_cycle_period**: Optional[Number] = None # in days, default is set to data duration divided by "min_cycles"
+- **cycle_step_size**: Number = 0.5 # in days, default is 0.5, but can be any float value. This determines the step size for the cycle periods to be used in the wavelet.
+- **cycle_selection_method**: str = 'prominence' # default is 'prominence', but can be 'power' or 'relative power'
+- **cycle_period**: Optional[Number] = None # default is None (automatically selects strongest), but can be any float value (in days). This determines the cycle period to filter the signal at and project the cycle at etc.
+- **bandpass_cutoff_percentage**: Number = 33 # default is +/- 33%, but can be any float value (as a percentage). This determines the bandpass filter cutoff percentages either side of the cycle period.
+- **projection_method**: str = "linear"  # default is linear projection, but can be "prophet" for Facebook Prophet method #TODO: add support for this and ohter projection methods
+- **projection_duration**: Optional[int] = None # if None, it will automatically select 4 * period of cycle. Otherwise this can be any integer value (in days).
+- **timing_of_future_phases**: str = "regular_sampling" # default is regular_sampling to capture all phases of the cycle, but can be "peak_trough" or "peak_trough_rising_falling"
+- **number_of_future_phases**: int = 8 # by default, rhythmo will predict 8 future phase times. Must be at least 1
 
 
 #### Running with non-default parameters
