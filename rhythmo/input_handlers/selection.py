@@ -1,6 +1,5 @@
 import numpy as np
-from scipy.signal import peak_prominences
-
+import scipy
 from logger.logger import get_logger
 logger = get_logger(__name__)
 
@@ -16,7 +15,8 @@ def find_peak_prominence(power, peak_inds):
     """
     Calculates prominence of each peak.
     """
-    peak_prominence = peak_prominences(power, peak_inds)[0]
+    #print(f'ERROR: {scipy.signal.peak_prominences(power, peak_inds)}')
+    peak_prominence = scipy.signal.peak_prominences(power, peak_inds)[0]
     return peak_prominence
 
 def find_power(power, peak_inds):

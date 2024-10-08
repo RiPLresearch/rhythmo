@@ -1,6 +1,5 @@
 import json
 import os
-
 import numpy as np
 import pandas as pd
 
@@ -52,7 +51,7 @@ def check_input(input_data_frame: pd.DataFrame) -> bool:
         return True
     raise ValueError(f"Input data frame does not contain one or more of the expected columns: timestamp, value")
 
-def resting_hr(array_like):
+def find_percentile(array_like):
     """
     Calculates the 10th percentile (value below which 10% of the data falls) of 
     the data array Finds the bottom 10% of the data and returns the mean. 

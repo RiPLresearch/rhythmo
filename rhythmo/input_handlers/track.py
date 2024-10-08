@@ -1,8 +1,8 @@
 from statistics import stdev
 import numpy as np
-import pycwt as cwt # continuous wavelet spectral analysis
+import pycwt as cwt 
 import scipy
-from scipy.signal import butter, sosfiltfilt, hilbert # tools for signal processing (filtering, fourier transforms, wavelets)
+from scipy.signal import butter, sosfiltfilt
 from logger.logger import get_logger
 logger = get_logger(__name__)
 
@@ -129,7 +129,6 @@ def track(_rhythmo_inputs, rhythmo_outputs, parameters):
     data_reverse_normalized = find_reverse_normalization(filtered_standardized_data, std_data, mean_data)
     filtered_cycle = standardized_data.copy()
     filtered_cycle['value'] = data_reverse_normalized
-
     # end of added section
 
     rhythmo_outputs.filtered_cycle = filtered_cycle
