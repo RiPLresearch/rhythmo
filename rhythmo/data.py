@@ -15,7 +15,7 @@ class Parameters:
     Default values must be provided.
     """
     data_type: str = "csv" # default is csv file, but can be "json" or "parquet"
-    data_resampling_rate: str = '1H'  # default is hourly, but can be '1Min', '5Min', '1D', etc.
+    data_resampling_rate: str = '1D'  # default is hourly, but can be '1Min', '5Min', '1D', etc.
     wavelet_waveform: str = "morlet" # default is morlet, but can be "gaussian", "mexican_hat", etc.. # TODO: add support for other waveforms
     min_cycles: int = 3 # default is 3, but can be any integer value. This determines the minimum number of cycles to observe for the wavelet transform.
     min_cycle_period: Number = 2 # in days

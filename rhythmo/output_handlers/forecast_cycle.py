@@ -8,7 +8,7 @@ logger = get_logger(__name__)
 
 def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
     """
-    
+
     """
     resampled_data = rhythmo_outputs.resampled_data
     #data_standardized = rhythmo_outputs.standardized_data
@@ -34,5 +34,12 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
     fig.update_layout(xaxis_title='Time',
                   yaxis_title='Heart Rate',
                   showlegend=True)
+    
+#     fig.update_layout(
+#     yaxis=dict(
+#         range=[51, 70]
+#     ),
+#     xaxis=dict(range=[datetime.datetime(1971, 1, 1), datetime.datetime(1972, 4, 1)])
+# )
     
     fig.show()

@@ -44,8 +44,8 @@ def resample_data(data, data_resampling_rate):
     resample_data:
         resampled data 
     """
-    #resampled_data = data.resample(data_resampling_rate, on='timestamp').mean().reset_index()
-    resampled_data = data.resample(data_resampling_rate, on='timestamp').apply(find_percentile).reset_index()
+    #resampled_data = data.resample(data_resampling_rate, on='timestamp').mean().reset_index() # better for hourly, and minute bc more granular (bottom 10 percentile, mising out on info)
+    resampled_data = data.resample(data_resampling_rate, on='timestamp').apply(find_percentile).reset_index() # this is better for daily resampling
     return resampled_data
 
 def get_proportion_nans(df):

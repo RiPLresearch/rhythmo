@@ -102,7 +102,7 @@ def find_reverse_normalization(filtered_data, std_data, mean_data):
     """
     This reverses the normalization of the filtered data.
     """
-    data_reverse_normalized = (std_data * filtered_data)/mean_data
+    data_reverse_normalized = (std_data * filtered_data) + mean_data
     return data_reverse_normalized
 
 def track(_rhythmo_inputs, rhythmo_outputs, parameters):
