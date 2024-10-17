@@ -13,7 +13,7 @@ from rhythmo.input_handlers.decomp import decomp
 from rhythmo.input_handlers.selection import selection
 from rhythmo.input_handlers.track import track
 from rhythmo.input_handlers.forecast import forecast
-# from rhythmo.input_handlers.schedule import schedule
+from rhythmo.input_handlers.schedule import schedule
 
 logger = get_logger(__name__)
 
@@ -163,6 +163,7 @@ class Runtime:
         """Runs rhythmo and returns the outputs"""
 
         rhythmo_outputs = RhythmoOutput.build_empty()
+        #rhythmo_outputs.waveletoutputs = RhythmoOutput.WaveletOutputs
         
         rhythmo_outputs = process(rhythmo_inputs, rhythmo_outputs, self.parameters)
         rhythmo_outputs = decomp(rhythmo_inputs, rhythmo_outputs, self.parameters)
@@ -178,7 +179,7 @@ class Runtime:
         if self.step == 3:
             return rhythmo_outputs
 
-        # rhythmo_outputs = schedule(rhythmo_inputs, rhythmo_outputs, self.parameters)
+        rhythmo_outputs = schedule(rhythmo_inputs, rhythmo_outputs, self.parameters)
 
         return rhythmo_outputs
 

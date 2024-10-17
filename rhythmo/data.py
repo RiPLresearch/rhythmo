@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass, field
-from typing import Optional, Union
+from typing import Optional, Union, Sequence
 
 import pandas as pd
 from logger.logger import get_logger
@@ -7,6 +7,7 @@ from logger.logger import get_logger
 logger = get_logger(__name__)
 
 Number = Union[float, int]
+MILLISECONDS_IN_A_DAY = 3600 * 24 * 1000
 
 @dataclass
 class Parameters:
@@ -78,6 +79,16 @@ class RhythmoInput:
         """Returns object of dataclass instance."""
         return asdict(self)
 
+
+@dataclass
+class WaveletOutputs:
+    period: Optional[Sequence[Number]] = None
+    power: Optional[Sequence[Number]] = None
+    significance: Optional[Sequence[Number]] = None
+    peak: Optional[Sequence[Number]] = None # peak (1 or 0)
+    scales: Optional[Sequence[Number]] = None
+    wavelet: Optional[Sequence[Number]] = None
+
 @dataclass
 class RhythmoOutput:
     """
@@ -86,7 +97,8 @@ class RhythmoOutput:
     resampled_data: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
     standardized_data: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
     best_segment: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
-    wavelet_data: Optional[pd.DataFrame] = None # dataframe with columns: period, power, significance, peak (1 or 0)
+    wavelet_outputs: Optional[WaveletOutputs] = None
+
     cycle_period: Optional[Number] = None # float value (in days)
     filtered_cycle: Optional[pd.DataFrame] = None # dataframe with columns: timestamp and value
 

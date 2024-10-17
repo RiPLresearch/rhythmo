@@ -152,7 +152,7 @@ def check_sufficient_data(df):
             return False, longest_segment.reset_index(drop=True)
         return True, longest_segment.reset_index(drop=True)
     
-    return data_check, best_segment
+    return data_check, best_segment # TODO
 
 
 def data_standardize(df):

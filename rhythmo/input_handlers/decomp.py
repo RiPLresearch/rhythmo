@@ -2,6 +2,7 @@ import pycwt as cwt
 import pandas as pd
 import numpy as np
 import scipy
+from rhythmo.data import WaveletOutputs 
 
 from logger.logger import get_logger
 logger = get_logger(__name__)
@@ -230,5 +231,7 @@ def decomp(_rhythmo_inputs, rhythmo_outputs, parameters):
 
     global_significance = get_global_significance(var, sampling_rate, scales, alpha, dof, wavelet)
 
-    rhythmo_outputs.wavelet_data = pd.DataFrame({"period": period, "power": power, "significance": global_significance, "peaks": peaks})
+    wavelet_outputs = WaveletOutputs(period = period, power = power, significance = global_significance, peaks = peaks, wavelet = wavelet, scales = scales)
+    rhythmo_outputs.wavelet_outputs = wavelet_outputs
+
     return rhythmo_outputs

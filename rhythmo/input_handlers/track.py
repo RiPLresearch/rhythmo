@@ -123,13 +123,13 @@ def track(_rhythmo_inputs, rhythmo_outputs, parameters):
     standardized_data = rhythmo_outputs.standardized_data
     filtered_standardized_data = butter_bandpass_filter(standardized_data['value'], lowcut, highcut, fs, order)
 
-    # ADDED IN:
+   
     std_data = stdev(rhythmo_outputs.resampled_data['value'])
     mean_data = np.mean(rhythmo_outputs.resampled_data['value'])
     data_reverse_normalized = find_reverse_normalization(filtered_standardized_data, std_data, mean_data)
+    
     filtered_cycle = standardized_data.copy()
     filtered_cycle['value'] = data_reverse_normalized
-    # end of added section
 
     rhythmo_outputs.filtered_cycle = filtered_cycle
     return rhythmo_outputs

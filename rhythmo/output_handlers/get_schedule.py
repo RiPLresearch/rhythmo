@@ -6,64 +6,59 @@ import plotly.graph_objects as go
 from logger.logger import get_logger
 logger = get_logger(__name__)
 
-from logger.logger import get_logger
-
-logger = get_logger(__name__)
-
-
-def output_handler(_rhythmo_inputs, rhythmo_outputs, _parameters) -> None:
-    filtered_cycle = rhythmo_outputs.filtered_cycle
+def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
+    timing_of_future_phases = parameters.timing_of_future_phases
+    number_of_future_phases = parameters.number_of_future_phases
+    projection_duration = parameters.projection_duration
     projected_cycle = rhythmo_outputs.projected_cycle
+    future_phases = rhythmo_outputs.future_phases
 
-    time_in_past = filtered_cycle['timestamp'].apply(lambda x: x.timestamp() * 1000)
-    timestamp_dif = time_in_past.iloc[-1] - time_in_past.iloc[-2]
-    time_in_future = np.arange(time_in_past.iloc[-1], time_in_past.iloc[-1] + timestamp_dif*1000, timestamp_dif)
+    if timing_of_future_phases == 'regular_sampling':
+        regular_samples = future_phases['regular_samples']
 
-    fig = go.Figure()
+    elif timing_of_future_phases == 'peak_trough':
+        peaks = future_phases['peaks']
+        troughs = future_phases['troughs']
+
+    elif timing_of_future_phases == 'peak_trough_rising_falling':
+        peaks = future_phases['peaks']
+        troughs = future_phases['troughs']
+        rising = 1
+        falling = 1
+
+    else:
+        error_message = f"Timing of future phases {timing_of_future_phases} is not valid. Please either add this functionality or select one of: regular_sampling, peak_trough, peak_trough_rising_falling."
+        logger.error(error_message, exc_info=True)
+        raise ValueError(error_message)
     
-    fig.add_trace(go.Scatter(x = time_in_future[:200], 
-                            y = projected_cycle[:200], 
-                            mode = 'lines', name=f'predicted future cycle', 
-                            line = {'color': 'tomato', 'dash': 'dash'}))
+    # # Define the start and end dates for the shaded region
+    # start_date = datetime.datetime(1971, 3, 5)
+    # end_date = datetime.datetime(1971, 3, 7)
 
-    # Define the start and end dates for the shaded region
-    start_date = datetime.datetime(1971, 3, 5)
-    end_date = datetime.datetime(1971, 3, 7)
+    # # Create a shaded region trace
+    # trough = go.Scatter(
+    #     x = [start_date, start_date, end_date, end_date],
+    #     y = [50, 75, 75, 50],
+    #     fill = 'toself',
+    #     fillcolor = 'rgba(0, 128, 0, 0.4)',
+    #     line = dict(color = 'rgba(0, 0, 0, 0)'),
+    #     showlegend = True,
+    #     name = 'trough of cycle'
+    # )
 
-    # Create a shaded region trace
-    trough = go.Scatter(
-        x = [start_date, start_date, end_date, end_date],
-        y = [50, 75, 75, 50],
-        fill = 'toself',
-        fillcolor = 'rgba(0, 128, 0, 0.4)',
-        line = dict(color = 'rgba(0, 0, 0, 0)'),
-        showlegend = True,
-        name = 'trough of cycle'
-    )
+    # start_date = datetime.datetime(1971, 8, 30)
+    # end_date = datetime.datetime(1971, 11, 2)
+    # peak = go.Scatter(
+    #     x = [start_date, start_date, end_date, end_date],
+    #     y = [50, 75, 75, 50],
+    #     fill = 'toself',
+    #     fillcolor = 'rgba(255, 0, 0, 0.4)',
+    #     line = dict(color = 'rgba(0, 0, 0, 0)'),
+    #     showlegend = True,
+    #     name = 'peak of cycle'
+    # )
 
-    start_date = datetime.datetime(1971, 8, 30)
-    end_date = datetime.datetime(1971, 11, 2)
-    peak = go.Scatter(
-        x = [start_date, start_date, end_date, end_date],
-        y = [50, 75, 75, 50],
-        fill = 'toself',
-        fillcolor = 'rgba(255, 0, 0, 0.4)',
-        line = dict(color = 'rgba(0, 0, 0, 0)'),
-        showlegend = True,
-        name = 'peak of cycle'
-    )
-
-    # Add the shaded region trace to the figure
-    fig.add_trace(peak)
-    fig.add_trace(trough)
-
-    # Display the figure
-    fig.update_layout(
-        yaxis = dict(range = [51, 70]),
-        xaxis = dict(range = [datetime.datetime(1971, 1, 1), datetime.datetime(1972, 4, 1)])
-    )
-
-    fig.update_layout(xaxis_title = 'Time',
-                    yaxis_title = 'Heart Rate',
-                    showlegend = True)
-    fig.show()
+    # # Add the shaded region trace to the figure
+    # fig.add_trace(peak)
+    # fig.add_trace(trough)
+    d = 1

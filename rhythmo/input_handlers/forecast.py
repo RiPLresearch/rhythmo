@@ -121,10 +121,7 @@ def forecast(_rhythmo_inputs, rhythmo_outputs, parameters):
     
     filtered_cycle = rhythmo_outputs.filtered_cycle
     cycle_data = filtered_cycle['value']
-    # standardized_data = rhythmo_outputs.standardized_data
-    # cycle_data = standardized_data['value']
-
-    #time_in_past = standardized_data['timestamp'].apply(lambda x: x.timestamp() * 1000)
+    
     time_in_past = filtered_cycle['timestamp'].apply(lambda x: x.timestamp() * 1000)
         
     cycle_phase = get_phases(cycle_data)
