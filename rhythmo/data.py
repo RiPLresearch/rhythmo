@@ -1,13 +1,12 @@
 from dataclasses import asdict, dataclass, field
 from typing import Optional, Union, Sequence
-
 import pandas as pd
 from logger.logger import get_logger
-
 logger = get_logger(__name__)
 
 Number = Union[float, int]
-MILLISECONDS_IN_A_DAY = 3600 * 24 * 1000
+SECONDS_IN_A_DAY = 60 * 60 * 24
+MILLISECONDS_IN_A_DAY = SECONDS_IN_A_DAY * 1000
 
 @dataclass
 class Parameters:
@@ -22,7 +21,7 @@ class Parameters:
     min_cycle_period: Number = 2 # in days
     max_cycle_period: Optional[Number] = None # in days, default is set to data duration divided by "min_cycles"
     cycle_step_size: Number = 0.5 # in days, default is 0.5, but can be any float value. This determines the step size for the cycle periods to be used in the wavelet.
-    cycle_selection_method: str = 'prominence' # default is 'prominence', but can be 'power' or 'relative power'
+    cycle_selection_method: str = 'minimum_error' # default is 'prominence', but can be 'power' or 'relative power'
     cycle_period: Optional[Number] = None # default is None (automatically selects strongest), but can be any float value (in days). This determines the cycle period to filter the signal at and project the cycle at etc.
     bandpass_cutoff_percentage: Number = 33 # default is +/- 33%, but can be any float value (as a percentage). This determines the bandpass filter cutoff percentages either side of the cycle period.
     projection_method: str = "linear"  # default is linear projection, but can be "prophet" for Facebook Prophet method #TODO: add support for this and ohter projection methods
@@ -85,9 +84,10 @@ class WaveletOutputs:
     period: Optional[Sequence[Number]] = None
     power: Optional[Sequence[Number]] = None
     significance: Optional[Sequence[Number]] = None
-    peak: Optional[Sequence[Number]] = None # peak (1 or 0)
+    peaks: Optional[Sequence[Number]] = None # peak (1 or 0)
     scales: Optional[Sequence[Number]] = None
     wavelet: Optional[Sequence[Number]] = None
+    SAMPLES_PER_DAY: Optional[Sequence[Number]] = None
 
 @dataclass
 class RhythmoOutput:

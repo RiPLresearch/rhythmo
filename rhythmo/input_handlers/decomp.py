@@ -2,12 +2,10 @@ import pycwt as cwt
 import pandas as pd
 import numpy as np
 import scipy
-from rhythmo.data import WaveletOutputs 
+from rhythmo.data import WaveletOutputs, SECONDS_IN_A_DAY
 
 from logger.logger import get_logger
 logger = get_logger(__name__)
-
-SECONDS_IN_A_DAY = 60 * 60 * 24
 
 def create_wavelet(wavelet_waveform):
     """
@@ -61,6 +59,36 @@ def  compute_alpha(data):
             data_array[1:]))
 
     return alpha, data_array
+
+def get_sampling_rate(data_resampling_rate):
+    """
+    Convert string sampling rate to integer sampling rate (per day).
+
+    Parameters
+    ------------
+    data_resampling_rate: str
+        data resampling rate
+
+    Returns
+    ------------
+    sampling_rate: 
+        integer sampling rate (samples per day)
+    """
+    if data_resampling_rate == '1H':
+        sampling_rate = 24
+    elif data_resampling_rate == '1D':
+        sampling_rate = 1
+    elif data_resampling_rate == '1Min':
+        sampling_rate = 24 * 60
+    elif data_resampling_rate == '5Min':
+        sampling_rate = 24 * 60 / 5
+    else:
+        # TODO: add more options in
+        # return error
+        logger.error(f"Sampling rate of {data_resampling_rate} unknown. Either add this functionality or select one of: 1H, 1D, 1Min, 5Min", exc_info=True)
+        raise ValueError(f"Sampling rate of {data_resampling_rate} unknown. Either add this functionality or select one of: 1H, 1D, 1Min, 5Min")
+    
+    return sampling_rate
 
 def get_cwt_frequencies(data, min_cycles, min_cycle_period, max_cycle_period, cycle_step_size):
     """
@@ -128,7 +156,7 @@ def cont_wavelet_transform(data_array, sampling_rate, wavelet, frequencies_cwt):
     fftfreqs: 
         Fourier frequencies corresponding to fft
     """
-    transformed_wavelet, scales, frequencies_scales, _, _, _ = cwt.cwt(signal = data_array, dt = sampling_rate, wavelet = wavelet, freqs = frequencies_cwt) 
+    transformed_wavelet, scales, frequencies_scales, _, _, _ = cwt.cwt(signal = data_array, dt = 1 / sampling_rate, wavelet = wavelet, freqs = frequencies_cwt) 
 
     return transformed_wavelet, scales, frequencies_scales
 
@@ -161,41 +189,9 @@ def get_global_significance(var, sampling_rate, scales, alpha, dof, wavelet, sig
     wavespec_theor: 
         theoretical wavelet spectrum used for significance testing (often ignored).
     """
-    global_significance, _ = cwt.significance(var, sampling_rate, scales, 1, alpha=alpha, significance_level=significance_level, dof=dof, wavelet=wavelet)
+    global_significance, _ = cwt.significance(var, 1 / sampling_rate, scales, 1, alpha = alpha, significance_level = significance_level, dof = dof, wavelet = wavelet)
     
     return global_significance
-
-
-def get_sampling_rate(data_resampling_rate):
-    """
-    Convert string sampling rate to integer sampling rate (per day).
-
-    Parameters
-    ------------
-    data_resampling_rate: str
-        data resampling rate
-
-    Returns
-    ------------
-    sampling_rate: 
-        integer sampling rate (samples per day)
-    """
-    if data_resampling_rate == '1H':
-        sampling_rate = 24
-    elif data_resampling_rate == '1D':
-        sampling_rate = 1
-    elif data_resampling_rate == '1Min':
-        sampling_rate = 24 * 60
-    elif data_resampling_rate == '5Min':
-        sampling_rate = 24 * 60 / 5
-    else:
-        # TODO: add more options in
-        # return error
-        logger.error(f"Sampling rate of {data_resampling_rate} unknown. Either add this functionality or select one of: 1H, 1D, 1Min, 5Min", exc_info=True)
-        raise ValueError(f"Sampling rate of {data_resampling_rate} unknown. Either add this functionality or select one of: 1H, 1D, 1Min, 5Min")
-    
-    return sampling_rate
-
 
 def decomp(_rhythmo_inputs, rhythmo_outputs, parameters): 
     """
@@ -231,7 +227,7 @@ def decomp(_rhythmo_inputs, rhythmo_outputs, parameters):
 
     global_significance = get_global_significance(var, sampling_rate, scales, alpha, dof, wavelet)
 
-    wavelet_outputs = WaveletOutputs(period = period, power = power, significance = global_significance, peaks = peaks, wavelet = wavelet, scales = scales)
+    wavelet_outputs = WaveletOutputs(period = period, power = power, significance = global_significance, peaks = peaks, wavelet = wavelet, scales = scales, SAMPLES_PER_DAY = sampling_rate)
     rhythmo_outputs.wavelet_outputs = wavelet_outputs
 
     return rhythmo_outputs

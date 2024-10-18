@@ -62,7 +62,7 @@ def butter_bandpass_filter_params(lowcut: float,
     nyq = 0.5 * fs # Nyquist frequency:
     low = lowcut / nyq # lower cut off frequency 
     high = highcut / nyq # higher cut off frequency 
-    sos = butter(order, [low, high], btype='bandpass', output='sos') 
+    sos = butter(order, [low, high], btype = 'bandpass', output = 'sos') 
     return sos
  
  

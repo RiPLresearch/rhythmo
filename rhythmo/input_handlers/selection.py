@@ -1,6 +1,8 @@
+import pandas as pd
 import numpy as np
 import pycwt as cwt
 import scipy
+
 from logger.logger import get_logger
 logger = get_logger(__name__)
 
@@ -32,22 +34,24 @@ def find_power(power, peak_inds):
     peak_power = [power[i] for i in peak_inds]
     return peak_power
 
-def find_minimum_error(standardized_data, peak_inds, wavelet, scales, wavelet_data):
+def find_minimum_error(standardized_data, peak_inds, wavelet, scales, SAMPLES_PER_DAY):
+    wave = standardized_data.to_numpy()
     mean_data = standardized_data.mean()
-    std_data = standardized_data.stdev()
+    std_data = standardized_data.std()
     std_signal = (standardized_data - mean_data) / std_data
     dj = 1 / 12
+    dt = 1 / SAMPLES_PER_DAY
 
     minimum_error = [
        np.square(np.subtract(std_signal, np.real(
-           cwt.icwt(np.array([wave[peak_option, :]]),
+           cwt.icwt(np.array(wave[peak_option]).reshape(1, -1),
                     np.array([scales[peak_option]]),
-                    SAMPLES_PER_DAY, dj, wavelet) * std_data))).mean()
+                    dt, dj, wavelet) * std_data))).mean()
        for peak_option in peak_inds
     ]        
     return minimum_error
 
-def find_strongest_peak(cycle_selection_method, wavelet_data, scales, wavelet, standardized_data):
+def find_strongest_peak(cycle_selection_method, peaks, period, power, significance, scales, wavelet, SAMPLES_PER_DAY, standardized_data):
 
     """
     Finds the strongest peaks using either the prominence, relative power or power method:
@@ -58,32 +62,32 @@ def find_strongest_peak(cycle_selection_method, wavelet_data, scales, wavelet, s
     power: the power of the peak
     minimum error: #TODO
     """
-    peak_inds = np.where(wavelet_data["peaks"].to_numpy())[0] # finds the indicies of the peaks in the wavelet data (previously calculated in decomp())
+    peak_inds = np.where(peaks.to_numpy())[0] # finds the indicies of the peaks in the wavelet data (previously calculated in decomp())
 
     if cycle_selection_method == 'prominence':
         # idenitifies the peak w/ highest prominence and stores the period of that peak into strongest_peak
-        peak_prominence = find_peak_prominence(wavelet_data["power"].to_numpy(), peak_inds)
+        peak_prominence = find_peak_prominence(power.to_numpy(), peak_inds)
         strongest_peak_ind = peak_inds[np.argmax(peak_prominence)]
     
-    elif cycle_selection_method == 'prominence-width':
+    elif cycle_selection_method == 'prominence_width':
         # identifies the peak with the highest prominence to width ratios and stores the period of that peak into strongest_peak
-        peak_prominence = find_peak_prominence(wavelet_data["power"].to_numpy(), peak_inds)
-        peak_prominence_width = find_prominence_width(wavelet_data["power"].to_numpy(), peak_inds)
+        peak_prominence = find_peak_prominence(power.to_numpy(), peak_inds)
+        peak_prominence_width = find_prominence_width(power.to_numpy(), peak_inds)
         strongest_peak_ind = peak_inds[np.argmax(peak_prominence/peak_prominence_width)]
     
     elif cycle_selection_method == 'relative_power':
         # idenitifies the peak w/ highest relative power and stores the period of that peak into strongest_peak
-        power_relative = find_relative_power(wavelet_data["power"].to_numpy(), wavelet_data["significance"].to_numpy(), peak_inds)
+        power_relative = find_relative_power(power.to_numpy(), significance.to_numpy(), peak_inds)
         strongest_peak_ind = peak_inds[np.argmax(power_relative)]
 
     elif cycle_selection_method == 'power':
         # idenitifies the peak w/ highest power and stores the period of that peak into strongest_peak
-        power = find_power(wavelet_data["power"].to_numpy(), peak_inds)
+        power = find_power(power.to_numpy(), peak_inds)
         strongest_peak_ind = peak_inds[np.argmax(power)] 
     
     elif cycle_selection_method == 'minimum_error':
         # TODO
-        minimum_error = find_minimum_error(standardized_data, peak_inds, wavelet, scales, wavelet_data["power"].to_numpy())
+        minimum_error = find_minimum_error(standardized_data['value'], peak_inds, wavelet, scales, SAMPLES_PER_DAY)
         strongest_peak_ind = peak_inds[np.argmin(minimum_error)]
 
     else:
@@ -92,7 +96,7 @@ def find_strongest_peak(cycle_selection_method, wavelet_data, scales, wavelet, s
         raise ValueError(error_message)
 
     # convert the indice of the strongest peak to the period of the peak
-    strongest_peak = wavelet_data["period"].iloc[strongest_peak_ind]
+    strongest_peak = period.iloc[strongest_peak_ind]
     return strongest_peak
 
 
@@ -103,10 +107,14 @@ def selection(_rhythmo_inputs, rhythmo_outputs, parameters):
     If the user has not provided a cycle period, go through with the cycle_selection_method.
     """
     wavelet_outputs = rhythmo_outputs.wavelet_outputs
-    wavelet_data = wavelet_outputs.wavelet_data
-    scales = wavelet_outputs.scales
+    peaks = pd.Series(wavelet_outputs.peaks)
+    power = pd.Series(wavelet_outputs.power)
+    significance = pd.Series(wavelet_outputs.significance)
+    period = pd.Series(wavelet_outputs.period)
     wavelet = wavelet_outputs.wavelet
-
+    scales = wavelet_outputs.scales
+    SAMPLES_PER_DAY = wavelet_outputs.SAMPLES_PER_DAY
+    
     if parameters.cycle_period is not None:
         if parameters.cycle_period >= parameters.min_cycle_period and parameters.cycle_period <= parameters.max_cycle_period:
             rhythmo_outputs.cycle_period = parameters.cycle_period
@@ -115,7 +123,7 @@ def selection(_rhythmo_inputs, rhythmo_outputs, parameters):
             logger.error(error_message, exc_info=True)
             raise ValueError(error_message)
     else:
-        strongest_peak = find_strongest_peak(parameters.cycle_selection_method, wavelet_data, scales, wavelet, rhythmo_outputs.standardized_data)
+        strongest_peak = find_strongest_peak(parameters.cycle_selection_method, peaks, period, power, significance, scales, wavelet, SAMPLES_PER_DAY, rhythmo_outputs.standardized_data)
         rhythmo_outputs.cycle_period = strongest_peak
 
     return rhythmo_outputs
