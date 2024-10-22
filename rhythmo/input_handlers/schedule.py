@@ -6,23 +6,25 @@ from rhythmo.data import MILLISECONDS_IN_A_DAY
 from logger.logger import get_logger
 logger = get_logger(__name__)
 
-def find_peak_values(projected_cycle):
+def find_peak_values(projected_cycle, number_of_future_phases):
     """
     Finds the peaks of the projected cycle.
     """
     peaks, _ = signal.find_peaks(projected_cycle)
-    peak_values = projected_cycle[peaks]
+    peaks_selection = peaks[:number_of_future_phases]
+    peak_values = projected_cycle.iloc[peaks_selection]
     return peak_values
 
-def find_trough_values(projected_cycle):
+def find_trough_values(projected_cycle, number_of_future_phases):
     """
     Finds the troughs of the projected cycle.
     """
     troughs, _ = signal.find_peaks(-projected_cycle)
-    trough_values = projected_cycle[troughs]
+    troughs_selection = troughs[:number_of_future_phases]
+    trough_values = projected_cycle.iloc[troughs_selection]
     return trough_values
 
-def find_rising_falling_values(projected_cycle):
+def find_rising_falling_values(projected_cycle, number_of_future_phases):
     """
     Finds the rising and falling values of the projected cycle.
     """
