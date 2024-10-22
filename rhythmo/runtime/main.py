@@ -163,7 +163,6 @@ class Runtime:
         """Runs rhythmo and returns the outputs"""
 
         rhythmo_outputs = RhythmoOutput.build_empty()
-        #rhythmo_outputs.waveletoutputs = RhythmoOutput.WaveletOutputs
         
         rhythmo_outputs = process(rhythmo_inputs, rhythmo_outputs, self.parameters)
         rhythmo_outputs = decomp(rhythmo_inputs, rhythmo_outputs, self.parameters)
