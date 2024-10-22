@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from scipy.fftpack import hilbert
 from prophet import Prophet
+from rhythmo.data import Cycle, MILLISECONDS_IN_A_DAY
 from logger.logger import get_logger
 logger = get_logger(__name__)
 
@@ -118,8 +119,10 @@ def forecast(_rhythmo_inputs, rhythmo_outputs, parameters):
     If the user has not provided a cycle projection method, go through with linear regression.
     """
     cycle_projection_method = parameters.projection_method
-    
-    filtered_cycle = rhythmo_outputs.filtered_cycle
+    projection_duration = parameters.projection_duration
+
+    historic_cycle = rhythmo_outputs.historic_cycle
+    filtered_cycle = historic_cycle.value
     cycle_data = filtered_cycle['value']
     
     time_in_past = filtered_cycle['timestamp'].apply(lambda x: x.timestamp() * 1000)
@@ -128,9 +131,21 @@ def forecast(_rhythmo_inputs, rhythmo_outputs, parameters):
     cumulative_phase = get_phase_arr(cycle_phase)
     time_in_future, phase_cycles_future = get_phases_future(cycle_projection_method, time_in_past, cumulative_phase)
 
-    time_in_future = pd.to_datetime(time_in_future, unit='ms')
+    #time_in_future = pd.to_datetime(time_in_future, unit='ms')
     avg_amplitude = np.percentile(cycle_data, 70) - np.percentile(cycle_data, 30)
     projected_cycle = (avg_amplitude)*(np.cos(phase_cycles_future)) + cycle_data.mean()
 
-    rhythmo_outputs.projected_cycle = projected_cycle
+    strongest_peak = rhythmo_outputs.cycle_period
+    timestamp_dif = time_in_past.iloc[-1] - time_in_past.iloc[-2]
+    projection_duration = 4 * strongest_peak if projection_duration is None else projection_duration #how long to project cycle in days
+    projection_duration_ms = projection_duration * MILLISECONDS_IN_A_DAY # convert to UNIX timestamp (miliseconds in a day)
+
+    future_timestamps = np.arange(time_in_past.iloc[-1], time_in_past.iloc[-1] + projection_duration_ms, timestamp_dif)
+    #future_time = np.where(future_timestamps > future_timestamps[0] + projection_duration_ms)
+
+    future_cycle = Cycle(timestamps = future_timestamps, value = projected_cycle, phases = time_in_future)
+    historic_cycle = Cycle(timestamps = time_in_past, value = filtered_cycle)
+
+    rhythmo_outputs.historic_cycle = historic_cycle
+    rhythmo_outputs.future_cycle = future_cycle
     return rhythmo_outputs

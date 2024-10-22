@@ -12,21 +12,17 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
     Plots the forecasted cycle to the user's chosen projection duration.
     """
     resampled_data = rhythmo_outputs.resampled_data
-    filtered_cycle = rhythmo_outputs.filtered_cycle
-    projected_cycle = rhythmo_outputs.projected_cycle
+    historic_cycle = rhythmo_outputs.historic_cycle
+    filtered_cycle = historic_cycle.value
     strongest_peak = rhythmo_outputs.cycle_period
     projection_duration = parameters.projection_duration
+    future_cycle = rhythmo_outputs.future_cycle
+    projected_cycle = future_cycle.value
+    time_in_future = pd.to_datetime(future_cycle.phases, unit='ms')
+    #time_in_future = future_cycle.timestamps
 
-
-    time_in_past = filtered_cycle['timestamp'].apply(lambda x: x.timestamp() * 1000)
-    timestamp_dif = time_in_past.iloc[-1] - time_in_past.iloc[-2]
-    projection_duration = 4 * strongest_peak if projection_duration is None else projection_duration
-        #how long to project cycle in days
+    projection_duration = 4 * strongest_peak if projection_duration is None else projection_duration #how long to project cycle in days
     projection_duration_ms = projection_duration * MILLISECONDS_IN_A_DAY
-    time_in_future = np.arange(time_in_past.iloc[-1], time_in_past.iloc[-1] + projection_duration_ms, timestamp_dif)
-    
-    # convert projection_duration to UNIX timestamp... x miliseconds in a day
-    # np.where(time_in_future > time_in_future[0] + projection_duration)
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=resampled_data['timestamp'], 
@@ -45,10 +41,10 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
                             line = {'color': 'tomato', 'dash': 'dash'}))
 
     # Display the figure
-    fig.update_layout(
-        yaxis = dict(range = [resampled_data['value'].min(), resampled_data['value'].max()]),
-        xaxis = dict(range = [datetime.datetime(1971, 1, 1), datetime.datetime(1972, 4, 1)])
-    )
+    # fig.update_layout(
+    #     yaxis = dict(range = [resampled_data['value'].min(), resampled_data['value'].max()]),
+    #     xaxis = dict(range = [datetime.datetime(1971, 1, 1), datetime.datetime(1972, 4, 1)])
+    # )
 
     fig.update_layout(xaxis_title = 'Time',
                     yaxis_title = 'Heart Rate',

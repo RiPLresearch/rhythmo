@@ -24,7 +24,7 @@ def find_relative_power(power, significance, peak_inds):
     """
     Calculates the 'relative power' of each peak compared to the global significance threshold.
     """
-    power_relative = [(power - significance)[i] for i in peak_inds]
+    power_relative = [[power - significance][0][i] for i in peak_inds]
     return power_relative
 
 def find_power(power, peak_inds):

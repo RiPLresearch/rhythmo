@@ -2,6 +2,7 @@ from statistics import stdev
 import numpy as np
 import pycwt as cwt 
 import scipy
+from rhythmo.data import Cycle
 from scipy.signal import butter, sosfiltfilt
 from logger.logger import get_logger
 logger = get_logger(__name__)
@@ -131,5 +132,7 @@ def track(_rhythmo_inputs, rhythmo_outputs, parameters):
     filtered_cycle = standardized_data.copy()
     filtered_cycle['value'] = data_reverse_normalized
 
-    rhythmo_outputs.filtered_cycle = filtered_cycle
+    historic_cycle = Cycle(value = filtered_cycle)
+
+    rhythmo_outputs.historic_cycle = historic_cycle
     return rhythmo_outputs
