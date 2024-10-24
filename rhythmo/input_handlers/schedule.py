@@ -45,15 +45,26 @@ def find_regular_samples(projected_cycle, number_of_future_phases, projected_tim
     regular_samples = projected_timestamps[indices]
     return regular_samples
 
+def find_rising_falling(peak_values, trough_values):
+    for peak in peak_values:
+        for trough in trough_values:
+            if peak > trough:
+                rising = trough_values + (peak_values - trough_values) / 2
+                falling = peak_values + (trough_values - peak_values) / 2
+            else:
+                rising = peak_values + (trough_values - peak_values) / 2
+                falling = trough_values + (peak_values - trough_values) / 2
+
+    return rising, falling
+
 def schedule(_rhythmo_inputs, rhythmo_outputs, parameters):
     """
     """
     timing_of_future_phases = parameters.timing_of_future_phases
     number_of_future_phases = parameters.number_of_future_phases
-    future_cycle = rhythmo_outputs.future_cycle
-    projected_cycle = future_cycle.value
-    projected_timestamps = future_cycle.phases
-    #projected_timestamps = pd.DataFrame(future_cycle.timestamps)
+
+    projected_cycle = rhythmo_outputs.future_cycle.value
+    projected_timestamps = rhythmo_outputs.future_cycle.timestamps
 
     if number_of_future_phases < 1:
         error_message = f"Number of future phases must be greater than 1. Please enter a value greater than 1."
@@ -68,6 +79,11 @@ def schedule(_rhythmo_inputs, rhythmo_outputs, parameters):
             future_phases = pd.DataFrame({"regular_samples": regular_samples})
 
         elif timing_of_future_phases == 'peak_trough':
+            if number_of_future_phases > 8:
+                error_message = f"Number of future phases {number_of_future_phases} is not valid. For this option peak_trough, the maximum number of future phases is 8 (i.e., no more than 4x cycle duration)."
+                logger.error(error_message, exc_info=True)
+                raise ValueError(error_message)
+            
             num_peaks = num_troughs = number_of_future_phases // 2
             if number_of_future_phases % 2 != 0:
                 num_peaks += 1
@@ -80,6 +96,10 @@ def schedule(_rhythmo_inputs, rhythmo_outputs, parameters):
             future_phases = pd.DataFrame({"peaks": peak_values, "troughs": trough_values})
 
         elif timing_of_future_phases == 'peak_trough_rising_falling':
+            if number_of_future_phases > 16 or number_of_future_phases < 4:
+                error_message = f"Number of future phases {number_of_future_phases} is not valid. For this option peak_trough_rising_falling, the maximum number of future phases is 16 (i.e., no more than 4x cycle duration) and minimum number is 4 (i.e., no less than 1x cycle duration)."
+                logger.error(error_message, exc_info=True)
+                raise ValueError(error_message)
             num_peaks = num_troughs = num_rising = num_falling = number_of_future_phases // 4
 
             remainder = number_of_future_phases % 4
@@ -93,6 +113,8 @@ def schedule(_rhythmo_inputs, rhythmo_outputs, parameters):
             peak_values = find_peak_values(projected_cycle, num_peaks, projected_timestamps)
             trough_values = find_trough_values(projected_cycle, num_troughs, projected_timestamps)
             rising_values, falling_values = find_rising_falling_values(projected_cycle, num_rising, num_falling, projected_timestamps)
+            rising, falling = find_rising_falling(peak_values, trough_values)
+            peak_values, trough_values, rising_date, falling_date = (pd.to_datetime(values, unit='ms') for values in (peak_values, trough_values, rising, falling))
             
             peak_values, trough_values, rising_values, falling_values = (pd.to_datetime(values, unit='ms') for values in (peak_values, trough_values, rising_values, falling_values))
 

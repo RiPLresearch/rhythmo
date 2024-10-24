@@ -49,7 +49,7 @@ def get_phase_arr(cycle_phase):
                 if (phase > 0 and (i == len(cycle_phase) - 1 or cycle_phase[i+1] <= 0)) or (n := n+1)]
     return cumulative_phase
 
-def get_phases_future(cycle_projection_method, time_in_past, cumulative_phase):
+def get_phases_future(cycle_projection_method, time_in_past, time_in_future, cumulative_phase):
     """
     Based on the selected cycle projection method (i.e., linear regression or Facebook Prophet),
     develops a model for the cumulative/unwrapped phases. Then forecasts future phases for a given 
@@ -74,10 +74,6 @@ def get_phases_future(cycle_projection_method, time_in_past, cumulative_phase):
         list of adjusted phase value
     """
 
-    # Finds timestamps to project phases from:
-    timestamp_dif = time_in_past.iloc[-1] - time_in_past.iloc[-2]
-    time_in_future = np.arange(time_in_past.iloc[-1], time_in_past.iloc[-1] + timestamp_dif*1000, timestamp_dif)
-    
     if cycle_projection_method == 'linear':
         # Fitting the linear regression model:
         a = np.array(time_in_past).reshape(-1, 1)
@@ -109,7 +105,22 @@ def get_phases_future(cycle_projection_method, time_in_past, cumulative_phase):
                       for future_phase in phases_in_future
                       for phase in [future_phase - (future_phase // (2 * np.pi)) * (2 * np.pi)]]
     
-    return time_in_future, circular_phase
+    return circular_phase
+
+def get_projection_times(time_in_past, strongest_peak):
+    """Gets the future projection times as an array"""
+
+    end_timestamp = time_in_past[-1]
+    timestamp_dif = end_timestamp - time_in_past[-2]
+    start_projection = end_timestamp + timestamp_dif
+
+    projection_duration = 4 * strongest_peak
+    projection_duration_ms = projection_duration * MILLISECONDS_IN_A_DAY # convert to UNIX timestamp (miliseconds in a day)
+    end_projection = start_projection + projection_duration_ms
+
+    future_timestamps = np.arange(start_projection, end_projection, timestamp_dif)
+
+    return future_timestamps
 
 
 def forecast(_rhythmo_inputs, rhythmo_outputs, parameters):
@@ -118,34 +129,23 @@ def forecast(_rhythmo_inputs, rhythmo_outputs, parameters):
     If the user inputs a cycle projection method, then the method is used to output a forecast of future phases of the cycle.
     If the user has not provided a cycle projection method, go through with linear regression.
     """
-    cycle_projection_method = parameters.projection_method
-    projection_duration = parameters.projection_duration
 
-    historic_cycle = rhythmo_outputs.historic_cycle
-    filtered_cycle = historic_cycle.value
-    cycle_data = filtered_cycle['value']
-    
-    time_in_past = filtered_cycle['timestamp'].apply(lambda x: x.timestamp() * 1000)
-        
-    cycle_phase = get_phases(cycle_data)
+    ## historic phase information
+    cycle_values = rhythmo_outputs.historic_cycle.value
+    time_in_past = rhythmo_outputs.historic_cycle.timestamps
+
+    ## get historic phase data
+    cycle_phase = get_phases(cycle_values) ## CHECK WHY THIS IS NOT GOING FROM 0 TO 2PI OR -pi to pi
+    rhythmo_outputs.historic_cycle.phases = cycle_phase
     cumulative_phase = get_phase_arr(cycle_phase)
-    time_in_future, phase_cycles_future = get_phases_future(cycle_projection_method, time_in_past, cumulative_phase)
 
-    #time_in_future = pd.to_datetime(time_in_future, unit='ms')
-    avg_amplitude = np.percentile(cycle_data, 70) - np.percentile(cycle_data, 30)
-    projected_cycle = (avg_amplitude)*(np.cos(phase_cycles_future)) + cycle_data.mean()
+    ## get future phase data
+    time_in_future = get_projection_times(time_in_past=time_in_past, strongest_peak=rhythmo_outputs.cycle_period)
+    phase_cycles_future = get_phases_future(parameters.projection_method, time_in_past, time_in_future, cumulative_phase)
 
-    strongest_peak = rhythmo_outputs.cycle_period
-    timestamp_dif = time_in_past.iloc[-1] - time_in_past.iloc[-2]
-    projection_duration = 4 * strongest_peak if projection_duration is None else projection_duration #how long to project cycle in days
-    projection_duration_ms = projection_duration * MILLISECONDS_IN_A_DAY # convert to UNIX timestamp (miliseconds in a day)
+    avg_amplitude = np.percentile(cycle_values, 70) - np.percentile(cycle_values, 30)
+    projected_cycle = (avg_amplitude)*(np.cos(phase_cycles_future)) + cycle_values.mean()
 
-    future_timestamps = np.arange(time_in_past.iloc[-1], time_in_past.iloc[-1] + projection_duration_ms, timestamp_dif)
-    #future_time = np.where(future_timestamps > future_timestamps[0] + projection_duration_ms)
+    rhythmo_outputs.future_cycle = Cycle(timestamps = time_in_future, value = projected_cycle, phases = phase_cycles_future)
 
-    future_cycle = Cycle(timestamps = future_timestamps, value = projected_cycle, phases = time_in_future)
-    historic_cycle = Cycle(timestamps = time_in_past, value = filtered_cycle)
-
-    rhythmo_outputs.historic_cycle = historic_cycle
-    rhythmo_outputs.future_cycle = future_cycle
     return rhythmo_outputs

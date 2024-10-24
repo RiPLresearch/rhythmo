@@ -12,16 +12,18 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
     Plots the forecasted cycle to the user's chosen projection duration.
     """
     resampled_data = rhythmo_outputs.resampled_data
-    historic_cycle = rhythmo_outputs.historic_cycle
-    filtered_cycle = historic_cycle.value
+    filtered_cycle = rhythmo_outputs.historic_cycle.value
+    time_in_past = rhythmo_outputs.historic_cycle.timestamps
     strongest_peak = rhythmo_outputs.cycle_period
     projection_duration = parameters.projection_duration
-    future_cycle = rhythmo_outputs.future_cycle
-    projected_cycle = future_cycle.value
-    time_in_future = pd.to_datetime(future_cycle.phases, unit='ms')
-    #time_in_future = future_cycle.timestamps
+    projected_cycle = rhythmo_outputs.future_cycle.value
+    time_in_future = rhythmo_outputs.future_cycle.timestamps
 
-    projection_duration = 4 * strongest_peak if projection_duration is None else projection_duration #how long to project cycle in days
+    if projection_duration is not None:
+        projection_duration = min(4*strongest_peak, projection_duration)
+    else:
+        projection_duration = 4 * strongest_peak
+    
     projection_duration_ms = projection_duration * MILLISECONDS_IN_A_DAY
 
     fig = go.Figure()
@@ -30,8 +32,8 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
                             mode='lines', name='heart rate',
                             line={'color': 'rgb(115,115,115)'}))
     
-    fig.add_trace(go.Scatter(x=filtered_cycle['timestamp'],
-                            y=filtered_cycle['value'],
+    fig.add_trace(go.Scatter(x= time_in_past,
+                            y=filtered_cycle,
                             mode='lines', name=f'{strongest_peak} day cycle',
                             line={'color': 'tomato'}))
     

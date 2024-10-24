@@ -11,7 +11,7 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
     This output handler outputs a plot of the schedule times and the corresponding csv file.
     """
     future_phases = rhythmo_outputs.future_phases
-    future_phases.to_csv(os.path.join("results", f"future_phases.csv"), index=False)
+    future_phases.to_csv(os.path.join("results", f"sampling_times.csv"), index=False)
 
     print(future_phases)
 

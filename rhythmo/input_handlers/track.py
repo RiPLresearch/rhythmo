@@ -128,11 +128,8 @@ def track(_rhythmo_inputs, rhythmo_outputs, parameters):
     std_data = stdev(rhythmo_outputs.resampled_data['value'])
     mean_data = np.mean(rhythmo_outputs.resampled_data['value'])
     data_reverse_normalized = find_reverse_normalization(filtered_standardized_data, std_data, mean_data)
-    
-    filtered_cycle = standardized_data.copy()
-    filtered_cycle['value'] = data_reverse_normalized
 
-    historic_cycle = Cycle(value = filtered_cycle)
+    historic_cycle = Cycle(timestamps = standardized_data['timestamp'].apply(lambda x: x.timestamp() * 1000).to_numpy(), value = data_reverse_normalized)
 
     rhythmo_outputs.historic_cycle = historic_cycle
     return rhythmo_outputs
