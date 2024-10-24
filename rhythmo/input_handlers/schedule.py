@@ -8,30 +8,39 @@ def find_peak_values(projected_cycle, num_peaks, projected_timestamps):
     """
     Finds the peaks of the projected cycle.
     """
-    peaks, _ = signal.find_peaks(projected_cycle)
-    peaks_selection = peaks[:num_peaks]
-    peak_values = projected_timestamps[peaks_selection]
-    return peak_values
+    peak_indices, _ = signal.find_peaks(projected_cycle)
+    # peaks_selection = peak_indices[:num_peaks]
+    # peak_values = projected_timestamps[peaks_selection]
+    peak_values = projected_timestamps[peak_indices]
+    return peak_values, peak_indices
 
 def find_trough_values(projected_cycle, num_troughs, projected_timestamps):
     """
     Finds the troughs of the projected cycle.
     """
-    troughs, _ = signal.find_peaks(-projected_cycle)
-    troughs_selection = troughs[:num_troughs]
-    trough_values = projected_timestamps[troughs_selection]
-    return trough_values
+    trough_indices, _ = signal.find_peaks(-projected_cycle)
+    # troughs_selection = trough_indices[:num_troughs]
+    # trough_values = projected_timestamps[troughs_selection]
+    trough_values = projected_timestamps[trough_indices]
+    return trough_values, trough_indices
 
-def find_rising_falling_values(projected_cycle, num_rising, num_falling, projected_timestamps):
+def find_rising_falling_values(peak_values, trough_values, peak_indices, trough_indices, num_rising, num_falling, projected_timestamps):
     """
     Finds the rising and falling values of the projected cycle.
     """
-    dy = np.gradient(projected_cycle, projected_timestamps)
-    rising_values = dy > 0
-    falling_values = dy < 0
+    # rising_indices = np.round((trough_indices + peak_indices)/2).astype(int)
+    # falling_indices = np.round((peak_indices[:-1] + trough_indices[1:])/2).astype(int)
 
-    rising_timestamps = projected_timestamps[rising_values]
-    falling_timestamps = projected_timestamps[falling_values]
+    # rising_timestamps = projected_timestamps[rising_indices]
+    # falling_timestamps = projected_timestamps[falling_indices]
+    # rising_values = rising_timestamps[:num_rising]
+    # falling_values = falling_timestamps[:num_falling]
+
+    rising_timestamps = np.round((trough_values + peak_values)/2).astype(int)
+    falling_timestamps = np.round((peak_values[:-1] + trough_values[1:])/2).astype(int)
+
+    # rising_timestamps = projected_timestamps[rising_indices]
+    # falling_timestamps = projected_timestamps[falling_indices]
     rising_values = rising_timestamps[:num_rising]
     falling_values = falling_timestamps[:num_falling]
 
@@ -44,18 +53,6 @@ def find_regular_samples(projected_cycle, number_of_future_phases, projected_tim
     indices = np.linspace(0, len(projected_cycle) - 1, number_of_future_phases, dtype = int)
     regular_samples = projected_timestamps[indices]
     return regular_samples
-
-def find_rising_falling(peak_values, trough_values):
-    for peak in peak_values:
-        for trough in trough_values:
-            if peak > trough:
-                rising = trough_values + (peak_values - trough_values) / 2
-                falling = peak_values + (trough_values - peak_values) / 2
-            else:
-                rising = peak_values + (trough_values - peak_values) / 2
-                falling = trough_values + (peak_values - trough_values) / 2
-
-    return rising, falling
 
 def schedule(_rhythmo_inputs, rhythmo_outputs, parameters):
     """
@@ -110,11 +107,9 @@ def schedule(_rhythmo_inputs, rhythmo_outputs, parameters):
             if remainder > 2:
                 num_troughs += 1
 
-            peak_values = find_peak_values(projected_cycle, num_peaks, projected_timestamps)
-            trough_values = find_trough_values(projected_cycle, num_troughs, projected_timestamps)
-            rising_values, falling_values = find_rising_falling_values(projected_cycle, num_rising, num_falling, projected_timestamps)
-            rising, falling = find_rising_falling(peak_values, trough_values)
-            peak_values, trough_values, rising_date, falling_date = (pd.to_datetime(values, unit='ms') for values in (peak_values, trough_values, rising, falling))
+            peak_values, peak_indices = find_peak_values(projected_cycle, num_peaks, projected_timestamps)
+            trough_values, trough_indices = find_trough_values(projected_cycle, num_troughs, projected_timestamps)
+            rising_values, falling_values = find_rising_falling_values(peak_values, trough_values, peak_indices, trough_indices, num_rising, num_falling, projected_timestamps)
             
             peak_values, trough_values, rising_values, falling_values = (pd.to_datetime(values, unit='ms') for values in (peak_values, trough_values, rising_values, falling_values))
 
