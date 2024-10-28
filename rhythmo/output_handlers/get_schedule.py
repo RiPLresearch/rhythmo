@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
-import datetime
 import os
-import matplotlib.pyplot as plt
 from rhythmo.data import MILLISECONDS_IN_A_DAY
 import plotly.graph_objects as go 
 from logger.logger import get_logger
@@ -22,6 +20,8 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
     projected_cycle = rhythmo_outputs.future_cycle.value
     time_in_future = rhythmo_outputs.future_cycle.timestamps
     future_phases = rhythmo_outputs.future_phases
+
+    time_in_future_datetime = pd.to_datetime(time_in_future, unit='ms')
     
     ## Outputting csv file of schedule times
     future_phases.to_csv(os.path.join("results", f"sampling_times.csv"), index=False)
@@ -37,7 +37,7 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x = resampled_data['timestamp'], 
-                            y = pd.Series(resampled_data['value']).rolling(window = 13).mean(),
+                            y = pd.Series(resampled_data['value']).rolling(window = 13, center = True).mean(),
                             mode = 'lines', name = 'heart rate',
                             line = {'color': 'rgb(115,115,115)'}))
     
@@ -58,88 +58,78 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
 
     fig.update_layout(
         yaxis = dict(range = [y_axis_min, y_axis_max]),
-        xaxis = dict(range = [time_in_past[0], time_in_future[-1]])
-        )
+        xaxis = dict(range = [time_in_past[0], time_in_future[-1]]))
     
     if 'regular_sampling' in future_phases:
+        # Define the dates for the future phases
         samples_dates = pd.to_datetime(future_phases['regular_sampling'])
-        time_in_future_datetime = pd.to_datetime(time_in_future, unit='ms')
-        indices =  np.where(np.isin(time_in_future_datetime, samples_dates))
+        samples_indices =  np.where(np.isin(time_in_future_datetime, samples_dates))
 
         regular_samples = go.Scatter(
-            x = time_in_future[indices],
-            y = projected_cycle[indices],
+            x = time_in_future[samples_indices],
+            y = projected_cycle[samples_indices],
             mode = 'markers',
             name = 'Sample Times',
-            marker = dict(size = 10, color = 'purple')
-        )
-        # Add the shaded region trace to the figure
+            marker = dict(size = 10, color = 'purple'))
+        
+        # Add the future phases to the figure
         fig.add_trace(regular_samples)
 
     elif 'peaks' in future_phases or 'troughs' in future_phases:
-        
-        # Define the start and end dates for the shaded region
-        trough_start_date = pd.to_datetime(future_phases['troughs']) - pd.Timedelta(days = 1)
-        trough_end_date = pd.to_datetime(future_phases['troughs']) + pd.Timedelta(days = 1)
+        # Define the dates for the future phases
+        trough_dates = pd.to_datetime(future_phases['troughs'])
+        trough_indices = np.where(np.isin(time_in_future_datetime, trough_dates))
 
-        # Create a shaded region trace
+        # Create markers for the future phases
         trough = go.Scatter(
-            x = [trough_start_date[0], trough_start_date[0], trough_end_date[0], trough_end_date[0]],
-            y = [y_axis_min, y_axis_max, y_axis_max, y_axis_min],
-            fill = 'toself',
-            fillcolor = 'rgba(0, 128, 0, 0.4)',
-            line = dict(color = 'rgba(0, 0, 0, 0)'),
+            x = time_in_future[trough_indices],
+            y = projected_cycle[trough_indices],
+            mode = 'markers',
+            marker = dict(size = 10, color = 'red'),
             showlegend = True,
-            name = 'trough of cycle'
-        )
+            name = 'trough of cycle')
 
-        peak_start_date = pd.to_datetime(future_phases['peaks']) - pd.Timedelta(days = 1)
-        peak_end_date = pd.to_datetime(future_phases['peaks']) + pd.Timedelta(days = 1)
+        peak_dates = pd.to_datetime(future_phases['peaks'])
+        peak_indices = np.where(np.isin(time_in_future_datetime, peak_dates))
 
         peak = go.Scatter(
-            x = [peak_start_date[0], peak_start_date[0], peak_end_date[0], peak_end_date[0]],
-            y = [y_axis_min, y_axis_max, y_axis_max, y_axis_min],
-            fill = 'toself',
-            fillcolor = 'rgba(255, 0, 0, 0.4)',
-            line = dict(color = 'rgba(0, 0, 0, 0)'),
+            x = time_in_future[peak_indices],
+            y = projected_cycle[peak_indices],
+            mode = 'markers',
+            marker = dict(size = 10, color = 'green'),
             showlegend = True,
-            name = 'peak of cycle'
-        )
+            name = 'peak of cycle')
 
-        # Add the shaded region trace to the figure
+        # Add the future phases to the figure
         fig.add_trace(peak)
         fig.add_trace(trough)
 
         if 'rising' in future_phases or 'falling' in future_phases:
-            # Define the start and end dates for the shaded region
-            rising_start_date = pd.to_datetime(future_phases['rising']) - pd.Timedelta(days = 1)
-            rising_end_date = pd.to_datetime(future_phases['rising']) + pd.Timedelta(days = 1)
+            # Define the dates for the future phases
+            rising_dates = pd.to_datetime(future_phases['rising'])
+            rising_indices = np.where(np.isin(time_in_future_datetime, rising_dates))
 
-            # Create a shaded region trace
+            # Create markers for future phases
             rising = go.Scatter(
-                x = [rising_start_date[0], rising_start_date[0], rising_end_date[0], rising_end_date[0]],
-                y = [y_axis_min, y_axis_max, y_axis_max, y_axis_min],
-                fill = 'toself',
-                fillcolor = 'rgba(128, 0, 128, 0.5)',
-                line = dict(color = 'rgba(0, 0, 0, 0)'),
+                x = time_in_future[rising_indices],
+                y = projected_cycle[rising_indices],
+                mode = 'markers',
+                marker = dict(size = 10, color = 'pink'),
                 showlegend = True,
-                name = 'rising'
-            )
+                name = 'rising')
 
-            falling_start_date = pd.to_datetime(future_phases['falling']) - pd.Timedelta(days = 1)
-            falling_end_date = pd.to_datetime(future_phases['falling']) + pd.Timedelta(days = 1)
+            falling_dates = pd.to_datetime(future_phases['falling'])
+            falling_indices = np.where(np.isin(time_in_future_datetime, falling_dates))
 
             falling = go.Scatter(
-                x = [falling_start_date[0], falling_start_date[0], falling_end_date[0], falling_end_date[0]],
-                y = [y_axis_min, y_axis_max, y_axis_max, y_axis_min],
-                fill = 'toself',
-                fillcolor = 'rgba(0, 0, 255, 1)',
-                line = dict(color = 'rgba(0, 0, 0, 0)'),
+                x = time_in_future[falling_indices],
+                y = projected_cycle[falling_indices],
+                mode = 'markers',
+                marker = dict(size = 10, color = 'blue'),
                 showlegend = True,
-                name = 'falling'
-            )
+                name = 'falling')
 
-            # Add the shaded region trace to the figure
+            # Add the future phases to the figure
             fig.add_trace(rising)
             fig.add_trace(falling)
     else:
