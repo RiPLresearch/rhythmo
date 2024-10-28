@@ -65,7 +65,7 @@ def schedule(_rhythmo_inputs, rhythmo_outputs, parameters):
             regular_samples = find_regular_samples(projected_cycle, number_of_future_phases, projected_timestamps)
             regular_samples = pd.to_datetime(regular_samples, unit='ms').date
 
-            future_phases = pd.DataFrame({"regular_samples": regular_samples})
+            future_phases = pd.DataFrame({"regular_sampling": regular_samples})
 
         elif timing_of_future_phases == 'peak_trough':
             if number_of_future_phases > 8:
