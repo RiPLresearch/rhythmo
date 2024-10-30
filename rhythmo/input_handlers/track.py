@@ -1,7 +1,5 @@
 from statistics import stdev
 import numpy as np
-import pycwt as cwt 
-import scipy
 from rhythmo.data import Cycle
 from scipy.signal import butter, sosfiltfilt
 from logger.logger import get_logger

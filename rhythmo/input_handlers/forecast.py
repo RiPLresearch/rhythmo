@@ -1,5 +1,7 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+import datetime
+import time
 from sklearn.linear_model import LinearRegression
 from scipy.fftpack import hilbert
 from prophet import Prophet
@@ -49,7 +51,7 @@ def get_phase_arr(cycle_phase):
                 if (phase > 0 and (i == len(cycle_phase) - 1 or cycle_phase[i+1] <= 0)) or (n := n+1)]
     return cumulative_phase
 
-def get_phases_future(cycle_projection_method, time_in_past, time_in_future, cumulative_phase):
+def get_phases_future(cycle_projection_method, time_in_past, time_in_future, cumulative_phase, strongest_peak):
     """
     Based on the selected cycle projection method (i.e., linear regression or Facebook Prophet),
     develops a model for the cumulative/unwrapped phases. Then forecasts future phases for a given 
@@ -86,14 +88,16 @@ def get_phases_future(cycle_projection_method, time_in_past, time_in_future, cum
 
     elif cycle_projection_method == 'prophet':
         # Fitting the facebook prophet model:
-        ds = np.array(time_in_past).reshape(-1, 1)
-        y = np.array(cumulative_phase).reshape(-1, 1)
+        ds = np.array(time_in_past).reshape(-1)
+        y = np.array(cumulative_phase).reshape(-1)
+        data = pd.DataFrame({'ds': ds, 'y': y})
         projection_model = Prophet(uncertainty_samples=0)
-        projection_model.fit(ds, y)
+        projection_model.fit(data)
 
         # Projecting future cycle phases from prophet model:
-        future = projection_model.make_future_dataframe(freq='H', periods=time_in_future, include_history=False) # Do I need to use data_resampling_rate from track.py?
-        phases_in_future = projection_model.predict(future)
+        future = projection_model.make_future_dataframe(freq='D', periods= int(4*strongest_peak), include_history=False) # Do I need to use data_resampling_rate from track.py?
+        projected_future_phases = projection_model.predict(future)
+        phases_in_future = projected_future_phases['ds'].astype('int64') // 10**9
 
     else:
         error_message = f"Cycle projection method {cycle_projection_method} is not valid. Please either add this functionality or select one of: linear, prophet."
@@ -122,7 +126,6 @@ def get_projection_times(time_in_past, strongest_peak):
 
     return future_timestamps
 
-
 def forecast(_rhythmo_inputs, rhythmo_outputs, parameters):
     """
     Projects the cycle into the future based on the selected cycle projection method (i.e., linear regression or Facebook Prophet).
@@ -141,7 +144,7 @@ def forecast(_rhythmo_inputs, rhythmo_outputs, parameters):
 
     ## get future phase data
     time_in_future = get_projection_times(time_in_past=time_in_past, strongest_peak=rhythmo_outputs.cycle_period)
-    phase_cycles_future = get_phases_future(parameters.projection_method, time_in_past, time_in_future, cumulative_phase)
+    phase_cycles_future = get_phases_future(parameters.projection_method, time_in_past, time_in_future, cumulative_phase, strongest_peak=rhythmo_outputs.cycle_period)
 
     avg_amplitude = np.percentile(cycle_values, 70) - np.percentile(cycle_values, 30)
     projected_cycle = (avg_amplitude)*(np.cos(phase_cycles_future)) + cycle_values.mean()

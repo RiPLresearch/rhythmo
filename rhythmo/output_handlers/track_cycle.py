@@ -1,5 +1,3 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go 
 from logger.logger import get_logger
 logger = get_logger(__name__)

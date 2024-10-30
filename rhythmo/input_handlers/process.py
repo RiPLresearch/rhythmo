@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import copy
 from rhythmo.utils import nearest, find_percentile

@@ -67,7 +67,7 @@ def find_percentile(array_like):
     """
     if array_like.empty:
         return np.nan  
-    return array_like[array_like <= np.percentile(array_like, 10)].mean()
+    return array_like[array_like <= np.percentile(array_like, 30)].mean()
 
 def nearest(items, pivot):
     """

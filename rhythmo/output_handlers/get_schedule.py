@@ -35,9 +35,11 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
     
     projection_duration_ms = projection_duration * MILLISECONDS_IN_A_DAY
 
+    window_size = int(np.round(strongest_peak/4))
+
     fig = go.Figure()
     fig.add_trace(go.Scatter(x = resampled_data['timestamp'], 
-                            y = pd.Series(resampled_data['value']).rolling(window = 13, center = True).mean(),
+                            y = pd.Series(resampled_data['value']).rolling(window = window_size, center = True).mean(),
                             mode = 'lines', name = 'heart rate',
                             line = {'color': 'rgb(115,115,115)'}))
     
@@ -114,7 +116,7 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
                 x = time_in_future[rising_indices],
                 y = projected_cycle[rising_indices],
                 mode = 'markers',
-                marker = dict(size = 10, color = 'pink'),
+                marker = dict(size = 8, color = 'lightblue'),
                 showlegend = True,
                 name = 'rising')
 
@@ -125,7 +127,7 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
                 x = time_in_future[falling_indices],
                 y = projected_cycle[falling_indices],
                 mode = 'markers',
-                marker = dict(size = 10, color = 'blue'),
+                marker = dict(size = 8, color = 'blue'),
                 showlegend = True,
                 name = 'falling')
 

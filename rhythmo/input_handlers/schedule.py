@@ -34,6 +34,7 @@ def find_rising_falling_values(all_peak_values, all_trough_values, num_rising, n
     """
     Finds the rising and falling values of the projected cycle.
     """
+
     if all_trough_values[0] < all_peak_values[0]:
         rising_timestamps = np.round((all_trough_values + all_peak_values)/2)
         falling_timestamps = np.round((all_peak_values[:-1] + all_trough_values[1:])/2)
@@ -101,8 +102,11 @@ def schedule(_rhythmo_inputs, rhythmo_outputs, parameters):
 
             peak_values, all_peak_values = find_peak_values(projected_cycle, num_peaks, projected_timestamps)
             trough_values, all_trough_values = find_trough_values(projected_cycle, num_troughs, projected_timestamps)
-            rising_values, falling_values = find_rising_falling_values(all_peak_values, all_trough_values, num_rising, num_falling)
-            
+            if all_trough_values.shape != all_peak_values.shape:
+                arr_length = min(all_trough_values.size, all_peak_values.size)
+                rising_values, falling_values = find_rising_falling_values(all_peak_values[:arr_length], all_trough_values[:arr_length], num_rising, num_falling)
+            else:
+                rising_values, falling_values = find_rising_falling_values(all_peak_values, all_trough_values, num_rising, num_falling)
             peak_values, trough_values, rising_values, falling_values = (pd.to_datetime(values, unit='ms').date for values in (peak_values, trough_values, rising_values, falling_values))
             future_phases = pd.DataFrame({"peaks": peak_values, "troughs": trough_values, "rising": rising_values, "falling": falling_values})
 

@@ -1,7 +1,4 @@
-import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import datetime
 import plotly.graph_objects as go 
 from rhythmo.data import MILLISECONDS_IN_A_DAY
 from logger.logger import get_logger
@@ -30,7 +27,7 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x = resampled_data['timestamp'], 
-                            y = resampled_data['value'],
+                            y = pd.Series(resampled_data['value']).rolling(window = 13, center = True).mean(),
                             mode = 'lines', name = 'heart rate',
                             line = {'color': 'rgb(115,115,115)'}))
     
