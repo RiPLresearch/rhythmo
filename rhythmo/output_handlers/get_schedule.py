@@ -36,10 +36,11 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
     projection_duration_ms = projection_duration * MILLISECONDS_IN_A_DAY
 
     window_size = int(np.round(strongest_peak/4))
+    moving_avg_resampled_data = pd.Series(resampled_data['value']).rolling(window = window_size, center = True).mean()
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x = resampled_data['timestamp'], 
-                            y = pd.Series(resampled_data['value']).rolling(window = window_size, center = True).mean(),
+                            y = moving_avg_resampled_data,
                             mode = 'lines', name = 'heart rate',
                             line = {'color': 'rgb(115,115,115)'}))
     
@@ -54,9 +55,9 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
                             line = {'color': 'tomato', 'dash': 'dash'}))
     
     # Determining margin for y-axis boundaries
-    y_axis_margin = (resampled_data['value'].max() - resampled_data['value'].min()) * 0.1
-    y_axis_min = resampled_data['value'].min() - y_axis_margin
-    y_axis_max = resampled_data['value'].max() + y_axis_margin
+    y_axis_margin = (moving_avg_resampled_data.max() - moving_avg_resampled_data.min()) * 0.1
+    y_axis_min = moving_avg_resampled_data.min() - y_axis_margin
+    y_axis_max = moving_avg_resampled_data.max() + y_axis_margin
 
     fig.update_layout(
         yaxis = dict(range = [y_axis_min, y_axis_max]),
@@ -87,7 +88,7 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
             x = time_in_future[trough_indices],
             y = projected_cycle[trough_indices],
             mode = 'markers',
-            marker = dict(size = 10, color = 'red'),
+            marker = dict(size = 10, color = 'green'),
             showlegend = True,
             name = 'trough of cycle')
 
@@ -98,7 +99,7 @@ def output_handler(_rhythmo_inputs, rhythmo_outputs, parameters) -> None:
             x = time_in_future[peak_indices],
             y = projected_cycle[peak_indices],
             mode = 'markers',
-            marker = dict(size = 10, color = 'green'),
+            marker = dict(size = 10, color = 'red'),
             showlegend = True,
             name = 'peak of cycle')
 

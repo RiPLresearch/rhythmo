@@ -1,9 +1,7 @@
 import numpy as np
 import pandas as pd
-import datetime
-import time
 from sklearn.linear_model import LinearRegression
-from scipy.fftpack import hilbert
+from scipy.signal import hilbert
 from prophet import Prophet
 from rhythmo.data import Cycle, MILLISECONDS_IN_A_DAY
 from logger.logger import get_logger
@@ -45,10 +43,14 @@ def get_phase_arr(cycle_phase):
     cumulative_phase: array of float
         array of cumulative phases
     """
-    n = 0 
+    n = 0
     cumulative_phase = [phase + 2 * (n+1) * np.pi
                 for i, phase in enumerate(cycle_phase)
                 if (phase > 0 and (i == len(cycle_phase) - 1 or cycle_phase[i+1] <= 0)) or (n := n+1)]
+    # cumulative_phase = [
+    #     phase + 2 * (n + 1) * np.pi if not (phase > 0 and (i < len(cycle_phase) - 1 and cycle_phase[i + 1] <= 0)) else (n := n + 1) * 0 + phase + 2 * (n + 1) * np.pi
+    #     for i, phase in enumerate(cycle_phase)
+    # ]
     return cumulative_phase
 
 def get_phases_future(cycle_projection_method, time_in_past, time_in_future, cumulative_phase, strongest_peak):
@@ -95,20 +97,22 @@ def get_phases_future(cycle_projection_method, time_in_past, time_in_future, cum
         projection_model.fit(data)
 
         # Projecting future cycle phases from prophet model:
-        future = projection_model.make_future_dataframe(freq='D', periods= int(4*strongest_peak), include_history=False) # Do I need to use data_resampling_rate from track.py?
+        future = projection_model.make_future_dataframe(freq='D', periods=int(4*strongest_peak), include_history=False) # Do I need to use data_resampling_rate from track.py?
         projected_future_phases = projection_model.predict(future)
         phases_in_future = projected_future_phases['ds'].astype('int64') // 10**9
-
+        #phases_in_future_1 = projected_future_phases['yhat']
+        #phases_in_future = get_phases(phases_in_future_1)
+ 
     else:
         error_message = f"Cycle projection method {cycle_projection_method} is not valid. Please either add this functionality or select one of: linear, prophet."
         logger.error(error_message, exc_info=True)
         raise ValueError(error_message)
 
     # Converts cumulative phases into circular phases by re-wrapping phases to be from -π to π
-    circular_phase = [phase - (2 * np.pi) if phase > np.pi else phase
-                      for future_phase in phases_in_future
-                      for phase in [future_phase - (future_phase // (2 * np.pi)) * (2 * np.pi)]]
-    
+    # circular_phase = [(phase - (2 * np.pi) if phase > np.pi else phase)
+                    #   for future_phase in phases_in_future
+                    #   for phase in [future_phase - (future_phase // (2 * np.pi)) * (2 * np.pi)]]
+    circular_phase = [future_phase - (future_phase // (2 * np.pi)) * (2 * np.pi) for future_phase in phases_in_future]
     return circular_phase
 
 def get_projection_times(time_in_past, strongest_peak):

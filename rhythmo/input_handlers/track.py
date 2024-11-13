@@ -1,4 +1,3 @@
-from statistics import stdev
 import numpy as np
 from rhythmo.data import Cycle
 from scipy.signal import butter, sosfiltfilt
@@ -123,7 +122,7 @@ def track(_rhythmo_inputs, rhythmo_outputs, parameters):
     filtered_standardized_data = butter_bandpass_filter(standardized_data['value'], lowcut, highcut, fs, order)
 
    
-    std_data = stdev(rhythmo_outputs.resampled_data['value'])
+    std_data = (rhythmo_outputs.resampled_data['value']).std()
     mean_data = np.mean(rhythmo_outputs.resampled_data['value'])
     data_reverse_normalized = find_reverse_normalization(filtered_standardized_data, std_data, mean_data)
 

@@ -66,7 +66,7 @@ def schedule(_rhythmo_inputs, rhythmo_outputs, parameters):
             regular_samples = find_regular_samples(projected_cycle, number_of_future_phases, projected_timestamps)
             regular_samples = pd.to_datetime(regular_samples, unit='ms').date
 
-            future_phases = pd.DataFrame({"regular_sampling": regular_samples})
+            future_phases = pd.DataFrame({"regular_sampling": pd.Series(regular_samples)})
 
         elif timing_of_future_phases == 'peak_trough':
             if number_of_future_phases > 8:
@@ -83,7 +83,7 @@ def schedule(_rhythmo_inputs, rhythmo_outputs, parameters):
 
             peak_values, trough_values = (pd.to_datetime(values, unit='ms').date for values in (peak_values, trough_values))
 
-            future_phases = pd.DataFrame({"peaks": peak_values, "troughs": trough_values})
+            future_phases = pd.DataFrame({"peaks": pd.Series(peak_values), "troughs": pd.Series(trough_values)})
 
         elif timing_of_future_phases == 'peak_trough_rising_falling':
             if number_of_future_phases > 16 or number_of_future_phases < 4:
@@ -102,13 +102,12 @@ def schedule(_rhythmo_inputs, rhythmo_outputs, parameters):
 
             peak_values, all_peak_values = find_peak_values(projected_cycle, num_peaks, projected_timestamps)
             trough_values, all_trough_values = find_trough_values(projected_cycle, num_troughs, projected_timestamps)
-            if all_trough_values.shape != all_peak_values.shape:
-                arr_length = min(all_trough_values.size, all_peak_values.size)
-                rising_values, falling_values = find_rising_falling_values(all_peak_values[:arr_length], all_trough_values[:arr_length], num_rising, num_falling)
-            else:
-                rising_values, falling_values = find_rising_falling_values(all_peak_values, all_trough_values, num_rising, num_falling)
+
+            arr_length = min(all_trough_values.size, all_peak_values.size)
+            rising_values, falling_values = find_rising_falling_values(all_peak_values[:arr_length], all_trough_values[:arr_length], num_rising, num_falling)
+
             peak_values, trough_values, rising_values, falling_values = (pd.to_datetime(values, unit='ms').date for values in (peak_values, trough_values, rising_values, falling_values))
-            future_phases = pd.DataFrame({"peaks": peak_values, "troughs": trough_values, "rising": rising_values, "falling": falling_values})
+            future_phases = pd.DataFrame({"peaks": pd.Series(peak_values), "troughs": pd.Series(trough_values), "rising": pd.Series(rising_values), "falling": pd.Series(falling_values)})
 
         else:
             error_message = f"Timing of future phases {timing_of_future_phases} is not valid. Please either add this functionality or select one of: regular_sampling, peak_trough, peak_trough_rising_falling."

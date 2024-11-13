@@ -27,8 +27,6 @@ def create_wavelet(wavelet_waveform):
         wavelet = cwt.DOG(m=2)
     elif wavelet_waveform == "mexican_hat":
         wavelet = cwt.MexicanHat()
-    # elif wavelet_waveform = "":
-    #     wavelet = cwt.
     else:
         wavelet = cwt.Morlet(6)
 
